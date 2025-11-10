@@ -7,37 +7,38 @@
  * @brief 主函数
  */
 int main(void)
-{
-    uint8_t key_num;
-    static uint8_t led_state[4] = {0, 0, 0, 0}; // 每个LED的状态
-
-
-    delay_init(168);
-    // 初始化硬件
-    KEY_Init();
-    LED_Init();
-    //    BEEP_Init();
-
-    //    // 初始化LED为熄灭状态（高电平）
-    LED_Set_All(0);
-
-    //		LED0=0;
-    while (1)
-    {
-        // 检测按键
-        key_num = KEY_Read();
-
-        // 如果有按键按下，切换对应LED的状态
-        if (key_num < 4)
-        {
-            led_state[key_num] = !led_state[key_num];
-            LED_Set(key_num, led_state[key_num]);
-
-            // 蜂鸣器短鸣提示按键已响应
-            //            BEEP_Buzz(0, 50);  // 蜂鸣器响50ms
-        }
-
-        // 小延时，降低CPU占用率
-        Delay_ms(10);
-    }
+{ 
+    u8 key;           //保存键值
+	delay_init(168);  //初始化延时函数
+	LED_Init();				//初始化LED端口 
+	BEEP_Init();      //初始化蜂鸣器端口
+	KEY_Init();       //初始化与按键连接的硬件接口
+	LED_Set_All(1);
+	LED0=0;
+	LED1=0;
+	LED2=0;	
+	//先点亮红灯
+	while(1)
+	{
+		key=KEY_Scan(0);		//得到键值
+	  if(key)
+		{						   
+			switch(key)
+			{				 
+				case KEY0_PRES:	//控制蜂鸣器
+					BEEP=!BEEP;
+					break;
+				case KEY1_PRES:	//控制LED0翻转
+					LED0=!LED0;
+					break;
+				case KEY2_PRES:	//控制LED1翻转	 
+					LED1=!LED1;
+					break;
+				case KEY3_PRES:	//控制LED2翻转 
+					LED2=!LED2;
+					break;
+			}
+		}else delay_ms(10); 
+	}
 }
+

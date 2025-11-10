@@ -39,11 +39,11 @@ void Delay_Cycles(uint32_t count)
  * @note 基于系统时钟的简单延时，根据实际时钟计算循环次数
  * @warning 此函数为软件延时，精度较低，不适合需要精确计时的场景
  */
-void Delay_ms(uint32_t ms)
+void delay_ms(uint32_t ms)
 {
     uint32_t i;
     for (i = 0; i < ms; i++) {
-        Delay_Cycles(g_sys_clk * 1000 / 3);  // 根据系统时钟计算循环次数
+        Delay_Cycles(g_sys_clk * 1000 / 4);  // 根据系统时钟计算循环次数，约4个时钟周期一个循环
     }
 }
 
@@ -53,10 +53,10 @@ void Delay_ms(uint32_t ms)
  * @note 基于系统时钟的简单延时，根据实际时钟计算循环次数
  * @warning 此函数为软件延时，精度较低，不适合需要精确计时的场景
  */
-void Delay_us(uint32_t us)
+void delay_us(uint32_t us)
 {
     uint32_t i;
     for (i = 0; i < us; i++) {
-        Delay_Cycles(g_sys_clk / 3);  // 根据系统时钟计算循环次数
+        Delay_Cycles(g_sys_clk / 4);  // 根据系统时钟计算循环次数，约4个时钟周期一个循环
     }
 }

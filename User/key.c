@@ -9,6 +9,12 @@
 #include "key.h"
 
 // ==================================
+// 按键状态机全局变量
+// ==================================
+
+Key_State_t keys[NUM_KEYS]; // 全局变量，存储所有按键状态
+
+// ==================================
 // 按键初始化函数实现
 // ==================================
 
@@ -54,6 +60,15 @@ int8_t KEY_Init_ByNumber(uint8_t key_num)
 int8_t KEY_Init(void)
 {
     int8_t result;
+    
+    // 初始化所有按键状态为默认值
+    for (uint8_t i = 0; i < NUM_KEYS; i++)
+    {
+        keys[i].current_state = 1;     // 假设初始状态为释放（高电平）
+        keys[i].debounce_cnt = 0;      // 消抖计数器清零
+        keys[i].press_event = 0;       // 按键事件标志清零
+        keys[i].released_flag = 1;     // 释放标志初始化为已释放
+    }
     
     result = KEY_Init_ByNumber(0);
     if (result != KEY_OK) return result;
@@ -153,7 +168,7 @@ uint8_t KEY_Is_Released(uint8_t key_num)
 int8_t KEY_Debounce(uint8_t key_num)
 {
     // 延时消抖，确认按键按下
-    Delay_ms(15);
+    delay_ms(15);
     
     // 再次检测按键状态
     return KEY_Is_Pressed(key_num) ? KEY_OK : KEY_NONE_PRESSED;
@@ -173,7 +188,7 @@ int8_t KEY_WaitForRelease(uint8_t key_num)
     
     while (KEY_Is_Pressed(key_num))  // 等待按键释放
     {
-        Delay_ms(10);  // 小延时，降低CPU占用率
+        delay_ms(10);  // 小延时，降低CPU占用率
     }
     
     return KEY_OK;
@@ -220,4 +235,119 @@ uint8_t KEY_Read(void)
 
     // 如果是干扰抖动，说明没有有效按键
     return KEY_NONE_PRESSED;
+}
+
+// ==================================
+// 按键扫描函数实现
+// ==================================
+
+/**
+ * @brief 按键扫描函数（支持连续和非连续模式）
+ * @param mode 扫描模式：0-支持连续按键，1-按键释放后才能再次检测
+ * @return 按键按键值（KEY0_PRES~KEY3_PRES），0表示无按键按下
+ * @note mode=0时，按下按键不松手也会连续返回按键值；mode=1时，必须松手才能再次检测
+ */
+uint8_t KEY_Scan(uint8_t mode)
+{
+    // 调用非阻塞扫描函数更新按键状态
+    KEY_Scan_NonBlocking();
+    
+    // 使用改进的按键值获取函数
+    return KEY_Get_Value(mode);
+}
+
+// ==================================
+// 非阻塞按键扫描函数实现
+// ==================================
+
+/**
+ * @brief 读取按键引脚电平的宏实现
+ * @param key_num 按键编号(0-3)
+ * @return 当前引脚电平（0-低电平，1-高电平）
+ */
+#define KEY_READ(key_num) ( \
+    (key_num == 0) ? KEY0 : \
+    (key_num == 1) ? KEY1 : \
+    (key_num == 2) ? KEY2 : \
+    (key_num == 3) ? KEY3 : 1)
+
+/**
+ * @brief 非阻塞按键扫描函数（状态机消抖）
+ * @note 此函数应定期调用（例如，每5ms调用一次），用于按键状态更新和消抖
+ */
+void KEY_Scan_NonBlocking(void)
+{
+    for (uint8_t i = 0; i < NUM_KEYS; i++)
+    {
+        // 1. 读取当前原始电平 (假设低电平有效，按下时为0)
+        uint8_t current_pin_level = KEY_READ(i); 
+
+        // 2. 状态机消抖逻辑
+        if (current_pin_level != keys[i].current_state)
+        {
+            // 电平发生变化，开始消抖计数
+            if (keys[i].debounce_cnt < 10) // 计数到 10 次 (例如 10*5ms = 50ms)
+            {
+                keys[i].debounce_cnt++;
+            }
+            else
+            {
+                // 消抖完成，确认状态改变
+                keys[i].current_state = current_pin_level;
+
+                // 如果状态变为按下 (假设按下是低电平 0)
+                if (keys[i].current_state == 0)
+                {
+                    keys[i].press_event = 1; // 标记按键按下事件
+                }
+            }
+        }
+        else
+        {
+            // 状态稳定，重置消抖计数器
+            keys[i].debounce_cnt = 0;
+        }
+    }
+}
+
+/**
+ * @brief 获取按键值（非阻塞，支持连续和非连续模式）
+ * @param mode 扫描模式：0-支持连续按键，1-按键释放后才能再次检测（单次模式）
+ * @return 按键按键值（KEY0_PRES~KEY3_PRES），0表示无按键按下
+ */
+uint8_t KEY_Get_Value(uint8_t mode)
+{
+    for (uint8_t i = 0; i < NUM_KEYS; i++)
+    {
+        // --- 模式 1: 单次触发模式 (必须释放才能再次检测) ---
+        if (mode == 1)
+        {
+            if (keys[i].current_state == 0) {
+                // 按键当前是按下的，标记为未释放
+                keys[i].released_flag = 0; 
+            } else {
+                // 按键当前是释放的，标记为已释放
+                keys[i].released_flag = 1;
+            }
+
+            if (keys[i].press_event && keys[i].released_flag == 1)
+            {
+                 // 必须是新事件 且 之前处于释放状态
+                 keys[i].press_event = 0; // 清除事件标志
+                 // 返回对应的按键值（根据您的定义 KEY0_PRES 等）
+                 return (KEY0_PRES << i); 
+            }
+        }
+        // --- 模式 0: 连续触发模式 ---
+        else 
+        {
+            if (keys[i].press_event)
+            {
+                keys[i].press_event = 0; // 清除事件标志
+                return (KEY0_PRES << i);
+            }
+        }
+    }
+    
+    return 0; // 无按键事件
 }

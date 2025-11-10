@@ -107,7 +107,7 @@ int8_t BEEP_Buzz(uint8_t beep_num, uint32_t duration_ms)
     }
     
     // 延时指定时间
-    Delay_ms(duration_ms);
+    delay_ms(duration_ms);
     
     // 关闭蜂鸣器
     return BEEP_Set(beep_num, 0);

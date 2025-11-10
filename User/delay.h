@@ -36,17 +36,17 @@ void Delay_Cycles(uint32_t count);
 /**
  * @brief 毫秒级延时函数
  * @param ms 延时时间（单位：毫秒）
- * @note 基于168MHz系统时钟的简单延时，约1ms=32000个循环周期
+ * @note 基于系统时钟的简单延时，根据实际时钟计算循环次数
  * @warning 此函数为软件延时，精度较低，不适合需要精确计时的场景
  */
-void Delay_ms(uint32_t ms);
+void delay_ms(uint32_t ms);
 
 /**
  * @brief 微秒级延时函数
  * @param us 延时时间（单位：微秒）
- * @note 基于168MHz系统时钟的简单延时，约1us=32个循环周期
+ * @note 基于系统时钟的简单延时，根据实际时钟计算循环次数
  * @warning 此函数为软件延时，精度较低，不适合需要精确计时的场景
  */
-void Delay_us(uint32_t us);
+void delay_us(uint32_t us);
 
 #endif /* _DELAY_H_ */
