@@ -1,0 +1,41 @@
+# Build outputs
+*.o
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+*.out
+*.d
+
+# Debug files
+*.bak
+*.tmp
+*.temp
+
+# IDE files
+*.ioc
+*.ioc-BAK
+*.ewp
+*.eww
+*.wsp
+*.wsx
+*.dep
+*.uvgui*
+*.uvguix*
+
+# Keil files
+*.uvproj
+*.uvprojx
+*.uvopt
+*.uvoptx
+
+# IAR files
+*.eww
+*.ewp
+*.dep
+
+# Output folders
+Output/
+output/
+Project/JLinkLog.txt
