@@ -51,7 +51,7 @@ int8_t KEY_Init_ByNumber(uint8_t key_num)
  * @brief 初始化所有按键
  * @return 错误码：KEY_OK-成功，其他-失败
  */
-int8_t KEY_Init_All(void)
+int8_t KEY_Init(void)
 {
     int8_t result;
     
@@ -90,16 +90,16 @@ int8_t KEY_Get_State(uint8_t key_num, uint8_t *state)
     switch (key_num)
     {
         case 0:
-            *state = KEY0_STATE();
+            *state = KEY0;
             break;
         case 1:
-            *state = KEY1_STATE();
+            *state = KEY1;
             break;
         case 2:
-            *state = KEY2_STATE();
+            *state = KEY2;
             break;
         case 3:
-            *state = KEY3_STATE();
+            *state = KEY3;
             break;
         default:
             return KEY_INVALID_KEY;

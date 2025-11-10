@@ -51,7 +51,7 @@ int8_t LED_Init_ByNumber(uint8_t led_num)
  * @brief 初始化所有LED
  * @return 错误码：LED_OK-成功，其他-失败
  */
-int8_t LED_Init_All(void)
+int8_t LED_Init(void)
 {
     int8_t result;
     

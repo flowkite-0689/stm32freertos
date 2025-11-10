@@ -13,7 +13,7 @@
 #ifndef _LED_H_
 #define _LED_H_
 
-#include "hardware_def.h"
+#include "sys.h"
 #include "gpio.h"
 
 // ==================================
@@ -58,7 +58,7 @@ int8_t LED_Init_ByNumber(uint8_t led_num);
  * @brief 初始化所有LED
  * @return 错误码：LED_OK-成功，其他-失败
  */
-int8_t LED_Init_All(void);
+int8_t LED_Init(void);
 
 // ==================================
 // LED控制函数声明

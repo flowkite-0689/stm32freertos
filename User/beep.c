@@ -43,7 +43,7 @@ int8_t BEEP_Init_ByNumber(uint8_t beep_num)
  * @brief 初始化所有蜂鸣器
  * @return 错误码：BEEP_OK-成功，其他-失败
  */
-int8_t BEEP_Init_All(void)
+int8_t BEEP_Init(void)
 {
     return BEEP_Init_ByNumber(0);
 }

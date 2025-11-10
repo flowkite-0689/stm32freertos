@@ -192,6 +192,8 @@
  */
 #define BEEP0(state) (state ? GPIO_SET(BEEP0_PORT, BEEP0_NUM) : GPIO_RST(BEEP0_PORT, BEEP0_NUM))
 #define BEEP0_STATE() GPIO_IN(BEEP0_PORT, BEEP0_NUM)
+#define BEEP  GPIO_OUT(BEEP0_PORT,BEEP0_NUM)
+
 /** @} */
 
 // ==================================
@@ -204,10 +206,10 @@
  * @note 按键硬件设计为下拉模式，按下时为低电平(0)，释放时为高电平(1)
  * @{
  */
-#define KEY0_STATE() GPIO_IN(KEY0_PORT, KEY0_NUM)
-#define KEY1_STATE() GPIO_IN(KEY1_PORT, KEY1_NUM)
-#define KEY2_STATE() GPIO_IN(KEY2_PORT, KEY2_NUM)
-#define KEY3_STATE() GPIO_IN(KEY3_PORT, KEY3_NUM)
+#define KEY0 GPIO_IN(KEY0_PORT, KEY0_NUM)
+#define KEY1 GPIO_IN(KEY1_PORT, KEY1_NUM)
+#define KEY2 GPIO_IN(KEY2_PORT, KEY2_NUM)
+#define KEY3 GPIO_IN(KEY3_PORT, KEY3_NUM)
 /** @} */
 
 #endif

@@ -13,7 +13,7 @@
 #ifndef _KEY_H_
 #define _KEY_H_
 
-#include "hardware_def.h"
+#include "sys.h"
 #include "gpio.h"
 #include "delay.h"
 
@@ -60,7 +60,7 @@ int8_t KEY_Init_ByNumber(uint8_t key_num);
  * @brief 初始化所有按键
  * @return 错误码：KEY_OK-成功，其他-失败
  */
-int8_t KEY_Init_All(void);
+int8_t KEY_Init(void);
 
 // ==================================
 // 按键状态读取函数声明

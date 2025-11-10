@@ -13,7 +13,7 @@
 #ifndef _BEEP_H_
 #define _BEEP_H_
 
-#include "hardware_def.h"
+#include "sys.h"
 #include "gpio.h"
 #include "delay.h"
 
@@ -56,7 +56,7 @@ int8_t BEEP_Init_ByNumber(uint8_t beep_num);
  * @brief 初始化所有蜂鸣器
  * @return 错误码：BEEP_OK-成功，其他-失败
  */
-int8_t BEEP_Init_All(void);
+int8_t BEEP_Init(void);
 
 // ==================================
 // 蜂鸣器控制函数声明
