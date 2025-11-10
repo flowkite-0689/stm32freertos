@@ -4,7 +4,7 @@
  * @author flowkite-0689
  * @version v2.0
  * @date 2025.11.10
- * 
+ *
  * 本文件统一管理项目中所有硬件引脚的定义，以及位带操作相关宏。
  * 采用分层架构设计，将硬件定义与具体功能实现分离。
  */
@@ -23,51 +23,51 @@
  * @defgroup LED_Definitions LED引脚定义
  * @{
  */
-#define LED0_PIN    GPIO_Pin_9   ///< LED0引脚定义
-#define LED0_PORT   GPIOF        ///< LED0端口定义
-#define LED0_NUM    9            ///< LED0引脚号数(用于位带操作)
+#define LED0_PIN GPIO_Pin_9 ///< LED0引脚定义
+#define LED0_PORT GPIOF     ///< LED0端口定义
+#define LED0_NUM 9          ///< LED0引脚号数(用于位带操作)
 
-#define LED1_PIN    GPIO_Pin_10  ///< LED1引脚定义
-#define LED1_PORT   GPIOF        ///< LED1端口定义
-#define LED1_NUM    10           ///< LED1引脚号数(用于位带操作)
+#define LED1_PIN GPIO_Pin_10 ///< LED1引脚定义
+#define LED1_PORT GPIOF      ///< LED1端口定义
+#define LED1_NUM 10          ///< LED1引脚号数(用于位带操作)
 
-#define LED2_PIN    GPIO_Pin_13  ///< LED2引脚定义
-#define LED2_PORT   GPIOE        ///< LED2端口定义
-#define LED2_NUM    13           ///< LED2引脚号数(用于位带操作)
+#define LED2_PIN GPIO_Pin_13 ///< LED2引脚定义
+#define LED2_PORT GPIOE      ///< LED2端口定义
+#define LED2_NUM 13          ///< LED2引脚号数(用于位带操作)
 
-#define LED3_PIN    GPIO_Pin_14  ///< LED3引脚定义
-#define LED3_PORT   GPIOE        ///< LED3端口定义
-#define LED3_NUM    14           ///< LED3引脚号数(用于位带操作)
+#define LED3_PIN GPIO_Pin_14 ///< LED3引脚定义
+#define LED3_PORT GPIOE      ///< LED3端口定义
+#define LED3_NUM 14          ///< LED3引脚号数(用于位带操作)
 /** @} */
 
 /**
  * @defgroup KEY_Definitions 按键引脚定义
  * @{
  */
-#define KEY0_PIN    GPIO_Pin_0   ///< 按键0引脚定义
-#define KEY0_PORT   GPIOA        ///< 按键0端口定义
-#define KEY0_NUM    0            ///< 按键0引脚号数(用于位带操作)
+#define KEY0_PIN GPIO_Pin_0 ///< 按键0引脚定义
+#define KEY0_PORT GPIOA     ///< 按键0端口定义
+#define KEY0_NUM 0          ///< 按键0引脚号数(用于位带操作)
 
-#define KEY1_PIN    GPIO_Pin_2   ///< 按键1引脚定义
-#define KEY1_PORT   GPIOE        ///< 按键1端口定义
-#define KEY1_NUM    2            ///< 按键1引脚号数(用于位带操作)
+#define KEY1_PIN GPIO_Pin_2 ///< 按键1引脚定义
+#define KEY1_PORT GPIOE     ///< 按键1端口定义
+#define KEY1_NUM 2          ///< 按键1引脚号数(用于位带操作)
 
-#define KEY2_PIN    GPIO_Pin_3   ///< 按键2引脚定义
-#define KEY2_PORT   GPIOE        ///< 按键2端口定义
-#define KEY2_NUM    3            ///< 按键2引脚号数(用于位带操作)
+#define KEY2_PIN GPIO_Pin_3 ///< 按键2引脚定义
+#define KEY2_PORT GPIOE     ///< 按键2端口定义
+#define KEY2_NUM 3          ///< 按键2引脚号数(用于位带操作)
 
-#define KEY3_PIN    GPIO_Pin_4   ///< 按键3引脚定义
-#define KEY3_PORT   GPIOE        ///< 按键3端口定义
-#define KEY3_NUM    4            ///< 按键3引脚号数(用于位带操作)
+#define KEY3_PIN GPIO_Pin_4 ///< 按键3引脚定义
+#define KEY3_PORT GPIOE     ///< 按键3端口定义
+#define KEY3_NUM 4          ///< 按键3引脚号数(用于位带操作)
 /** @} */
 
 /**
  * @defgroup BEEP_Definitions 蜂鸣器引脚定义
  * @{
  */
-#define BEEP0_PIN   GPIO_Pin_8   ///< 蜂鸣器0引脚定义
-#define BEEP0_PORT  GPIOF        ///< 蜂鸣器0端口定义
-#define BEEP0_NUM   8            ///< 蜂鸣器0引脚号数(用于位带操作)
+#define BEEP0_PIN GPIO_Pin_8 ///< 蜂鸣器0引脚定义
+#define BEEP0_PORT GPIOF     ///< 蜂鸣器0端口定义
+#define BEEP0_NUM 8          ///< 蜂鸣器0引脚号数(用于位带操作)
 /** @} */
 
 // ==================================
@@ -134,7 +134,6 @@
  * @{
  */
 
-
 /**
  * @brief LED状态读取宏
  * @return LED状态：0-亮，1-灭
@@ -150,34 +149,33 @@
 // LED直接赋值宏定义（实现LED0=0语法）
 // ==================================
 
-
 /**
  * @brief LED0直接赋值宏
  * @note 使用方法：LED0 = 0; // 点亮LED0
  * @note 使用方法：LED0 = 1; // 熄灭LED0
  */
-#define LED0 GPIO_OUT(LED0_PORT,LED0_NUM)
+#define LED0 GPIO_OUT(LED0_PORT, LED0_NUM)
 
 /**
  * @brief LED1直接赋值宏
  * @note 使用方法：LED1 = 0; // 点亮LED1
  * @note 使用方法：LED1 = 1; // 熄灭LED1
  */
-#define LED1 GPIO_OUT(LED1_PORT,LED1_NUM)
+#define LED1 GPIO_OUT(LED1_PORT, LED1_NUM)
 
 /**
  * @brief LED2直接赋值宏
  * @note 使用方法：LED2 = 0; // 点亮LED2
  * @note 使用方法：LED2 = 1; // 熄灭LED2
  */
-#define LED2 GPIO_OUT(LED2_PORT,LED2_NUM)
+#define LED2 GPIO_OUT(LED2_PORT, LED2_NUM)
 
 /**
  * @brief LED3直接赋值宏
  * @note 使用方法：LED3 = 0; // 点亮LED3
  * @note 使用方法：LED3 = 1; // 熄灭LED3
  */
-#define LED3 GPIO_OUT(LED3_PORT,LED3_NUM)
+#define LED3 GPIO_OUT(LED3_PORT, LED3_NUM)
 
 /** @} */
 
@@ -192,7 +190,7 @@
  */
 #define BEEP0(state) (state ? GPIO_SET(BEEP0_PORT, BEEP0_NUM) : GPIO_RST(BEEP0_PORT, BEEP0_NUM))
 #define BEEP0_STATE() GPIO_IN(BEEP0_PORT, BEEP0_NUM)
-#define BEEP  GPIO_OUT(BEEP0_PORT,BEEP0_NUM)
+#define BEEP GPIO_OUT(BEEP0_PORT, BEEP0_NUM)
 
 /** @} */
 
@@ -213,4 +211,3 @@
 /** @} */
 
 #endif
-
