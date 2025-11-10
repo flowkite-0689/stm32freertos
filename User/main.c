@@ -2,168 +2,164 @@
 #include "./myInit/myInit.h"
 
 /**
- * @brief  »ñÈ¡°´¼ü×´Ì¬£¨¸Ä½øµÄ½¡×³ÊµÏÖ£©
+ * @brief  è¯»å–æŒ‰é”®GPIOçŠ¶æ€
+ * @param  key_num: æŒ‰é”®ç¼–å·(0-3)
+ * @retval uint8_t: 0-æŒ‰ä¸‹, 1-é‡Šæ”¾
+ * @note   ä½¿ç”¨ä½å¸¦æ“ä½œç›´æ¥è¯»å–æŒ‰é”®çŠ¶æ€
+ */
+uint8_t Read_GPIO_State(uint8_t key_num)
+{
+    switch (key_num)
+    {
+    case 0:
+        return KEY0_STATE();
+    case 1:
+        return KEY1_STATE();
+    case 2:
+        return KEY2_STATE();
+    case 3:
+        return KEY3_STATE();
+    default:
+        return 1; // é»˜è®¤ä¸ºé‡Šæ”¾
+    }
+}
+
+/**
+ * @brief  æŒ‰é”®æ¶ˆæŠ–æ£€æµ‹
+ * @param  key_num: æŒ‰é”®ç¼–å·(0-3)
+ * @retval uint8_t: 0-ç¡®è®¤æŒ‰ä¸‹, 1-æœªæŒ‰ä¸‹æˆ–æŠ–åŠ¨
+ * @note   è¿›è¡Œå»¶æ—¶æ¶ˆæŠ–ç¡®è®¤
+ */
+uint8_t Key_Debounce(uint8_t key_num)
+{
+    // å»¶æ—¶æ¶ˆæŠ–ï¼Œç¡®è®¤æŒ‰é”®æŒ‰ä¸‹
+    Delay_ms(15);
+    
+    // å†æ¬¡æ£€æµ‹æŒ‰é”®çŠ¶æ€
+    return Read_GPIO_State(key_num);
+}
+
+/**
+ * @brief  ç­‰å¾…æŒ‰é”®é‡Šæ”¾
+ * @param  key_num: æŒ‰é”®ç¼–å·(0-3)
+ * @retval None
+ * @note   é˜»å¡ç­‰å¾…æŒ‰é”®é‡Šæ”¾
+ */
+void Key_WaitForRelease(uint8_t key_num)
+{
+    while (Read_GPIO_State(key_num) == 0) // ç­‰å¾…æŒ‰é”®é‡Šæ”¾
+    {
+        Delay_ms(10); // å°å»¶æ—¶ï¼Œé™ä½CPUå ç”¨ç‡
+    }
+}
+
+/**
+ * @brief  è·å–æŒ‰é”®çŠ¶æ€ï¼ˆæ¶ˆæŠ–ã€ç¡®è§£ã€ç­‰å¾…é‡Šæ”¾çš„å®Œæ•´æŒ‰é”®æ£€æµ‹å®ç°ï¼‰
  * @param  None
- * @retval uint8_t: 0~3·Ö±ğ¶ÔÓ¦KEY0~KEY3°´ÏÂ£¬0xFF±íÊ¾ÎŞ°´¼ü°´ÏÂ
- * @note   ²ÉÓÃ"¿ìËÙ¼ì²â+ÑÓÊ±È·ÈÏ+µÈ´ıÊÍ·Å"Èı²½Âß¼­
+ * @retval uint8_t: 0~3åˆ†åˆ«å¯¹åº”KEY0~KEY3æŒ‰ä¸‹ï¼Œ0xFFè¡¨ç¤ºæ— æŒ‰é”®æŒ‰ä¸‹
+ * @note   é‡‡ç”¨"å¿«é€Ÿæ£€æµ‹+å»¶æ—¶ç¡®è®¤+ç­‰å¾…é‡Šæ”¾"çš„å¤„ç†é€»è¾‘
  */
 uint8_t Key_Read(void)
 {
-    uint8_t key_pressed = 0xFF; // ³õÊ¼»¯ÎªÎŞ°´¼ü
+    uint8_t key_pressed = 0xFF; // åˆå§‹åŒ–ä¸ºæ— æŒ‰é”®
     uint8_t current_state;
 
-    // 1. ¿ìËÙ¼ì²âËÄ¸ö°´¼üµÄ°´ÏÂÇé¿ö
-    for(uint8_t i = 0; i < 4; i++)
+    // 1. å¿«é€Ÿæ£€æµ‹å››ä¸ªæŒ‰é”®çš„è¾“å…¥å¼•è„š
+    for (uint8_t i = 0; i < 4; i++)
     {
-        switch(i)
-        {
-            case 0: current_state = GPIO_ReadInputDataBit(KEY0_PORT, KEY0_PIN); break;
-            case 1: current_state = GPIO_ReadInputDataBit(KEY1_PORT, KEY1_PIN); break;
-            case 2: current_state = GPIO_ReadInputDataBit(KEY2_PORT, KEY2_PIN); break;
-            case 3: current_state = GPIO_ReadInputDataBit(KEY3_PORT, KEY3_PIN); break;
-            default: current_state = 1; break; // Ä¬ÈÏÎªÊÍ·Å
-        }
+        current_state = Read_GPIO_State(i);
 
-        // 2. ¼ì²âµ½°´¼ü°´ÏÂ£¨µÍµçÆ½£©
-        if(current_state == 0)
+        // 2. æ£€æµ‹åˆ°æŒ‰é”®æŒ‰ä¸‹ï¼ˆä½ç”µå¹³ï¼‰
+        if (current_state == 0)
         {
-            key_pressed = i; // ¼ÇÂ¼¿ÉÄÜ°´ÏÂµÄ°´¼ü
-            break; // Ìø³öÑ­»·£¬²»ÔÙ¼ì²âÆäËû°´¼ü
+            key_pressed = i; // è®°å½•å¯èƒ½æŒ‰ä¸‹çš„æŒ‰é”®
+            break;           // é€€å‡ºå¾ªç¯ï¼Œä¸å†æ£€æµ‹å…¶ä»–æŒ‰é”®
         }
     }
 
-    // 3. Èç¹ûÃ»ÓĞ°´¼ü°´ÏÂ£¬Ö±½Ó·µ»Ø0xFF
-    if(key_pressed == 0xFF)
+    // 3. å¦‚æœæ²¡æœ‰æŒ‰é”®æŒ‰ä¸‹ï¼Œç›´æ¥è¿”å›0xFF
+    if (key_pressed == 0xFF)
     {
         return 0xFF;
     }
 
-    // 4. ÑÓÊ±Ïû¶¶£¬È·ÈÏ°´¼ü°´ÏÂ£¨·ÀÖ¹¶¶¶¯£©
-    Delay_ms(15);
-
-    // 5. ÔÙ´ÎÈ·ÈÏ°´¼üÊÇ·ñÈÔÈ»°´ÏÂ
-    switch(key_pressed)
+    // 4. æ¶ˆæŠ–æ£€æµ‹
+    if (Key_Debounce(key_pressed) == 0)
     {
-        case 0: current_state = GPIO_ReadInputDataBit(KEY0_PORT, KEY0_PIN); break;
-        case 1: current_state = GPIO_ReadInputDataBit(KEY1_PORT, KEY1_PIN); break;
-        case 2: current_state = GPIO_ReadInputDataBit(KEY2_PORT, KEY2_PIN); break;
-        case 3: current_state = GPIO_ReadInputDataBit(KEY3_PORT, KEY3_PIN); break;
-        default: current_state = 1; break;
-    }
-
-    // 6. È·ÈÏ°´¼ü
-    if(current_state == 0)
-    {
-        // 7. µÈ´ı°´¼üÊÍ·Å
-        while(1)
-        {
-            switch(key_pressed)
-            {
-                case 0: current_state = GPIO_ReadInputDataBit(KEY0_PORT, KEY0_PIN); break;
-                case 1: current_state = GPIO_ReadInputDataBit(KEY1_PORT, KEY1_PIN); break;
-                case 2: current_state = GPIO_ReadInputDataBit(KEY2_PORT, KEY2_PIN); break;
-                case 3: current_state = GPIO_ReadInputDataBit(KEY3_PORT, KEY3_PIN); break;
-            }
-            if(current_state == 1) // ¼ì²âµ½°´¼üÊÍ·Å
-            {
-                break; // ÍË³öµÈ´ıÑ­»·
-            }
-            Delay_ms(10); // Ğ¡ÑÓÊ±½µµÍCPUÕ¼ÓÃÂÊ
-        }
+        // 5. ç­‰å¾…æŒ‰é”®é‡Šæ”¾
+        Key_WaitForRelease(key_pressed);
         
-        // 8. È·ÈÏÍêÕûµÄ"°´ÏÂ-ÊÍ·Å"¹ı³Ìºó£¬·µ»Ø°´¼ü±àºÅ
+        // 6. ç¡®è®¤æŒ‰é”®"æŒ‰ä¸‹-é‡Šæ”¾"è¿‡ç¨‹åï¼Œè¿”å›æŒ‰é”®ç¼–å·
         return key_pressed;
     }
 
-    // Èç¹ûÊÇ¶¶¶¯»ò¸ÉÈÅ£¬ËµÃ÷Ã»ÓĞÓĞĞ§°´¼ü
+    // å¦‚æœæ˜¯å¹²æ‰°æŠ–åŠ¨ï¼Œè¯´æ˜æ²¡æœ‰æœ‰æ•ˆæŒ‰é”®
     return 0xFF;
 }
 
 /**
- * @brief ¿ØÖÆLED¿ª¹Ø
- * @param led_num LED±àºÅ(0-3)
- * @param state LED×´Ì¬(0-¿ªÆô, 1-¹Ø±Õ)
+ * @brief æ§åˆ¶LEDçŠ¶æ€
+ * @param led_num LEDç¼–å·(0-3)
+ * @param state LEDçŠ¶æ€(0-ç‚¹äº®, 1-å…³é—­)
+ * @note   ä½¿ç”¨ä½å¸¦æ“ä½œç›´æ¥æ§åˆ¶LEDçŠ¶æ€
  */
-void LED_Control(uint8_t led_num, uint8_t state) {
-    switch(led_num) {
-        case 0: // LED0
-            if (state) {
-                GPIO_SetBits(LED0_PORT, LED0_PIN);      // ¹Ø±ÕLED
-            } else {
-                GPIO_ResetBits(LED0_PORT, LED0_PIN);    // µãÁÁLED
-            }
-            break;
-        case 1: // LED1
-            if (state) {
-                GPIO_SetBits(LED1_PORT, LED1_PIN);
-            } else {
-                GPIO_ResetBits(LED1_PORT, LED1_PIN);
-            }
-            break;
-        case 2: // LED2
-            if (state) {
-                GPIO_SetBits(LED2_PORT, LED2_PIN);
-            } else {
-                GPIO_ResetBits(LED2_PORT, LED2_PIN);
-            }
-            break;
-        case 3: // LED3
-            if (state) {
-                GPIO_SetBits(LED3_PORT, LED3_PIN);
-            } else {
-                GPIO_ResetBits(LED3_PORT, LED3_PIN);
-            }
-            break;
+void LED_Control(uint8_t led_num, uint8_t state)
+{
+    switch (led_num)
+    {
+    case 0: // LED0
+        LED0(state);
+        break;
+    case 1: // LED1
+        LED1(state);
+        break;
+    case 2: // LED2
+        LED2(state);
+        break;
+    case 3: // LED3
+        LED3(state);
+        break;
     }
 }
 
 /**
- * @brief Ö÷º¯Êı
+ * @brief ä¸»å‡½æ•°
  */
-int main(void) {
+int main(void)
+{
     uint8_t key_num;
-    static uint8_t led_state[4] = {0, 0, 0, 0}; // Ã¿¸öLEDµÄ×´Ì¬
-    
-    // ³õÊ¼»¯Ó²¼ş
-    // KEY_Init(KEY0_PIN, KEY0_PORT);
-    // KEY_Init(KEY1_PIN, KEY1_PORT);
-    // KEY_Init(KEY2_PIN, KEY2_PORT);
-    // KEY_Init(KEY3_PIN, KEY3_PORT);
-
+    static uint8_t led_state[4] = {0, 0, 0, 0}; // æ¯ä¸ªLEDçš„çŠ¶æ€
     KEY_Initx(0);
     KEY_Initx(1);
     KEY_Initx(2);
     KEY_Initx(3);
 
-    
-//    LED_Init(LED0_PIN, LED0_PORT);
-//    LED_Init(LED1_PIN, LED1_PORT);
-//    LED_Init(LED2_PIN, LED2_PORT);
-//    LED_Init(LED3_PIN, LED3_PORT);
+    LED_Initx(0);
+    LED_Initx(1);
+    LED_Initx(2);
+    LED_Initx(3);
 		
-		LED_Initx(0);
-		LED_Initx(1);
-		LED_Initx(2);
-		LED_Initx(3);
-		
-    
-    // ³õÊ¼»¯LEDÎª¿ªÆô×´Ì¬
-    GPIO_ResetBits(LED0_PORT, LED0_PIN);
-    GPIO_ResetBits(LED1_PORT, LED1_PIN);
-    GPIO_ResetBits(LED2_PORT, LED2_PIN);
-    GPIO_ResetBits(LED3_PORT, LED3_PIN);
-    
-    while(1) {
-        // ¼ì²â°´¼ü
+	BEEP_Initx(0);
+
+    // åˆå§‹åŒ–LEDä¸ºç†„ç­çŠ¶æ€ï¼ˆé«˜ç”µå¹³ï¼‰
+    LED0(0);
+    LED1(0);
+    LED2(0);
+    LED3(0);
+
+    while (1)
+    {
+        // æ£€æµ‹æŒ‰é”®
         key_num = Key_Read();
-        
-        // Èç¹ûÓĞ°´¼ü°´ÏÂ£¬ÇĞ»»¶ÔÓ¦LEDµÄ×´Ì¬
-        if (key_num < 4) {
+
+        // å¦‚æœæœ‰æŒ‰é”®æŒ‰ä¸‹ï¼Œåˆ‡æ¢å¯¹åº”LEDçš„çŠ¶æ€
+        if (key_num < 4)
+        {
             led_state[key_num] = !led_state[key_num];
             LED_Control(key_num, led_state[key_num]);
         }
-        
-        // ¶ÌÔİÑÓÊ±½µµÍCPUÕ¼ÓÃÂÊ
-       Delay_ms(10);
+
+        // å°å»¶æ—¶ï¼Œé™ä½CPUå ç”¨ç‡
+        Delay_ms(10);
     }
 }

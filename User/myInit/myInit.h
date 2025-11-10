@@ -97,7 +97,6 @@ void LED_Init(uint32_t LED_PIN, GPIO_TypeDef *GPIOx);
  */
 void BEEP_Init(uint32_t BEEP_PIN, GPIO_TypeDef *GPIOx);
 
-
 /**
  * @brief 按键GPIO初始化二次封装函数
  * @param x 按键编号(0-3)
@@ -132,5 +131,268 @@ void LED_Initx(uint32_t x);
  */
 void BEEP_Initx(uint32_t x);
 
-#endif
+//位带操作
+/*
+位带别名地址 = 外设别名基地址 + (原始寄存器地址-外设基地址)*32 +  引脚的号数 * 4
+*32 即 << 5 ,,*4 即 << 2
+*/
+#define BITBAND(addr, bit) (*(volatile unsigned long *)((0x42000000U + ((addr - 0x40000000U) << 5) + ((bit) << 2))))
 
+// 一次封装
+#define GPIO_OUT(PORT, PIN) BITBAND((uint32_t)&PORT->ODR, PIN)
+#define GPIO_IN(PORT, PIN) BITBAND((uint32_t)&PORT->IDR, PIN)
+#define GPIO_SET(PORT,PIN ) (PORT->BSRRL = (1UL << PIN)) //bit set reset low register 置1
+#define GPIO_RST(PORT, PIN)     (PORT->BSRRH = (1UL << PIN)) //bit set reset high register 置0
+
+//二次封装
+
+/**
+ * @defgroup LED_BitBand_Operations LED位带操作宏定义
+ * @brief 提供LED控制的位带操作宏定义，支持直接对LED引脚进行位操作
+ * @note LED硬件设计为低电平点亮，高电平熄灭
+ * @{
+ */
+/**
+ * @brief LED0控制宏
+ * @param n LED状态：0-亮，1-灭
+ * @note 使用位带操作直接控制LED0 (PF9)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED0(n) (n ? GPIO_SET(LED0_PORT, 9) : GPIO_RST(LED0_PORT, 9))
+
+/**
+ * @brief LED1控制宏
+ * @param n LED状态：0-亮，1-灭
+ * @note 使用位带操作直接控制LED1 (PF10)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED1(n) (n ? GPIO_SET(LED1_PORT, 10) : GPIO_RST(LED1_PORT, 10))
+
+/**
+ * @brief LED2控制宏
+ * @param n LED状态：0-亮，1-灭
+ * @note 使用位带操作直接控制LED2 (PE13)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED2(n) (n ? GPIO_SET(LED2_PORT, 13) : GPIO_RST(LED2_PORT, 13))
+
+/**
+ * @brief LED3控制宏
+ * @param n LED状态：0-亮，1-灭
+ * @note 使用位带操作直接控制LED3 (PE14)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED3(n) (n ? GPIO_SET(LED3_PORT, 14) : GPIO_RST(LED3_PORT, 14))
+
+/**
+ * @brief LED状态读取宏
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作直接读取LED0 (PF9)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED0_STATE() GPIO_IN(LED0_PORT, 9)
+
+/**
+ * @brief LED1状态读取宏
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作直接读取LED1 (PF10)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED1_STATE() GPIO_IN(LED1_PORT, 10)
+
+/**
+ * @brief LED2状态读取宏
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作直接读取LED2 (PE13)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED2_STATE() GPIO_IN(LED2_PORT, 13)
+
+/**
+ * @brief LED3状态读取宏
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作直接读取LED3 (PE14)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+#define LED3_STATE() GPIO_IN(LED3_PORT, 14)
+/** @} */
+
+/**
+ * @defgroup BEEP_BitBand_Operations 蜂鸣器位带操作宏定义
+ * @brief 提供蜂鸣器控制的位带操作宏定义，支持直接对蜂鸣器引脚进行位操作
+ * @{
+ */
+/**
+ * @brief 蜂鸣器0控制宏
+ * @param n 蜂鸣器状态：1-开启，0-关闭
+ * @note 使用位带操作直接控制蜂鸣器0 (PF8)
+ */
+#define BEEP0(n) (n ? GPIO_SET(BEEP0_PORT, 8) : GPIO_RST(BEEP0_PORT, 8))
+
+/**
+ * @brief 蜂鸣器0状态读取宏
+ * @return 蜂鸣器状态：1-开启，0-关闭
+ * @note 使用位带操作直接读取蜂鸣器0 (PF8)当前状态
+ */
+#define BEEP0_STATE() GPIO_IN(BEEP0_PORT, 8)
+/** @} */
+
+/**
+ * @defgroup KEY_BitBand_Operations 按键位带操作宏定义
+ * @brief 提供按键读取的位带操作宏定义，支持直接读取按键引脚状态
+ * @note 按键硬件设计为下拉模式，按下时为低电平(0)，释放时为高电平(1)
+ * @{
+ */
+/**
+ * @brief 按键0状态读取宏
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作直接读取按键0 (PA0)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+#define KEY0_STATE() GPIO_IN(KEY0_PORT, 0)
+
+/**
+ * @brief 按键1状态读取宏
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作直接读取按键1 (PE2)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+#define KEY1_STATE() GPIO_IN(KEY1_PORT, 2)
+
+/**
+ * @brief 按键2状态读取宏
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作直接读取按键2 (PE3)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+#define KEY2_STATE() GPIO_IN(KEY2_PORT, 3)
+
+/**
+ * @brief 按键3状态读取宏
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作直接读取按键3 (PE4)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+#define KEY3_STATE() GPIO_IN(KEY3_PORT, 4)
+/** @} */
+
+/**
+ * @defgroup LED_Control_Functions LED控制函数声明
+ * @brief 提供LED控制的标准函数接口，支持函数式调用
+ * @note LED硬件设计为低电平点亮，高电平熄灭
+ * @{
+ */
+/**
+ * @brief LED0控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED0 (PF9)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED0_Set(uint8_t state);
+
+/**
+ * @brief LED1控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED1 (PF10)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED1_Set(uint8_t state);
+
+/**
+ * @brief LED2控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED2 (PE13)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED2_Set(uint8_t state);
+
+/**
+ * @brief LED3控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED3 (PE14)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED3_Set(uint8_t state);
+
+/**
+ * @brief LED0状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED0 (PF9)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED0_GetState(void);
+
+/**
+ * @brief LED1状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED1 (PF10)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED1_GetState(void);
+
+/**
+ * @brief LED2状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED2 (PE13)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED2_GetState(void);
+
+/**
+ * @brief LED3状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED3 (PE14)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED3_GetState(void);
+/** @} */
+
+/**
+ * @defgroup BEEP_Control_Functions 蜂鸣器控制函数声明
+ * @brief 提供蜂鸣器控制的标准函数接口，支持函数式调用
+ * @{
+ */
+void BEEP0_Set(uint8_t state);
+uint8_t BEEP0_GetState(void);
+/** @} */
+
+/**
+ * @defgroup KEY_Read_Functions 按键读取函数声明
+ * @brief 提供按键读取的标准函数接口，支持函数式调用
+ * @note 按键硬件设计为下拉模式，按下时为低电平(0)，释放时为高电平(1)
+ * @{
+ */
+/**
+ * @brief 按键0状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键0 (PA0)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY0_GetState(void);
+
+/**
+ * @brief 按键1状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键1 (PE2)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY1_GetState(void);
+
+/**
+ * @brief 按键2状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键2 (PE3)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY2_GetState(void);
+
+/**
+ * @brief 按键3状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键3 (PE4)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY3_GetState(void);
+/** @} */
+
+#endif

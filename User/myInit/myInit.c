@@ -208,3 +208,179 @@ void BEEP_Initx(uint32_t x)
     break;
   }
 }
+
+
+//位带操作
+
+/**
+ * @defgroup LED_Control_Functions LED控制函数实现
+ * @brief 提供LED控制的标准函数接口实现
+ * @note LED硬件设计为低电平点亮，高电平熄灭
+ * @{
+ */
+/**
+ * @brief LED0控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED0 (PF9)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED0_Set(uint8_t state)
+{
+  LED0(state);
+}
+
+/**
+ * @brief LED1控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED1 (PF10)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED1_Set(uint8_t state)
+{
+  LED1(state);
+}
+
+/**
+ * @brief LED2控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED2 (PE13)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED2_Set(uint8_t state)
+{
+  LED2(state);
+}
+
+/**
+ * @brief LED3控制函数
+ * @param state LED状态：0-亮，1-灭
+ * @note 使用位带操作控制LED3 (PE14)
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+void LED3_Set(uint8_t state)
+{
+  LED3(state);
+}
+
+/**
+ * @brief LED0状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED0 (PF9)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED0_GetState(void)
+{
+  return LED0_STATE();
+}
+
+/**
+ * @brief LED1状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED1 (PF10)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED1_GetState(void)
+{
+  return LED1_STATE();
+}
+
+/**
+ * @brief LED2状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED2 (PE13)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED2_GetState(void)
+{
+  return LED2_STATE();
+}
+
+/**
+ * @brief LED3状态读取函数
+ * @return LED状态：0-亮，1-灭
+ * @note 使用位带操作读取LED3 (PE14)当前状态
+ * @note 硬件设计：低电平点亮，高电平熄灭
+ */
+uint8_t LED3_GetState(void)
+{
+  return LED3_STATE();
+}
+/** @} */
+
+/**
+ * @defgroup BEEP_Control_Functions 蜂鸣器控制函数实现
+ * @brief 提供蜂鸣器控制的标准函数接口实现
+ * @{
+ */
+/**
+ * @brief 蜂鸣器0控制函数
+ * @param state 蜂鸣器状态：1-开启，0-关闭
+ * @note 使用位带操作控制蜂鸣器0 (PF8)
+ */
+void BEEP0_Set(uint8_t state)
+{
+  BEEP0(state);
+}
+
+/**
+ * @brief 蜂鸣器0状态读取函数
+ * @return 蜂鸣器状态：1-开启，0-关闭
+ * @note 使用位带操作读取蜂鸣器0 (PF8)当前状态
+ */
+uint8_t BEEP0_GetState(void)
+{
+  return BEEP0_STATE();
+}
+/** @} */
+
+/**
+ * @defgroup KEY_Read_Functions 按键读取函数实现
+ * @brief 提供按键读取的标准函数接口实现
+ * @note 按键硬件设计为下拉模式，按下时为低电平(0)，释放时为高电平(1)
+ * @{
+ */
+/**
+ * @brief 按键0状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键0 (PA0)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY0_GetState(void)
+{
+  return KEY0_STATE();
+}
+
+/**
+ * @brief 按键1状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键1 (PE2)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY1_GetState(void)
+{
+  return KEY1_STATE();
+}
+
+/**
+ * @brief 按键2状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键2 (PE3)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY2_GetState(void)
+{
+  return KEY2_STATE();
+}
+
+/**
+ * @brief 按键3状态读取函数
+ * @return 按键状态：0-按下，1-释放
+ * @note 使用位带操作读取按键3 (PE4)当前状态
+ * @note 硬件设计：按键按下时为低电平，释放时为高电平
+ */
+uint8_t KEY3_GetState(void)
+{
+  return KEY3_STATE();
+}
+/** @} */
+
