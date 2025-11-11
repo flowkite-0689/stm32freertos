@@ -3,41 +3,90 @@
 #include "beep.h"
 
 /**
- * @brief 主函数
+ * @brief
  */
-int main(void)
-{ 
-    u8 key;           //保存键值
-	delay_init(168);  //初始化延时函数
-	LED_Init();				//初始化LED端口 
-	BEEP_Init();      //初始化蜂鸣器端口
-	KEY_Init();       //初始化与按键连接的硬件接口
-	LED_Set_All(1);
-	LED0=0;
-	LED1=0;
-	LED2=0;	
-	//先点亮红灯
-	while(1)
+void ls(void)
+{
+	uint32_t led_state[4] = {0, 0, 0, 0};
+
+	uint32_t flag = 0;
+	for (uint32_t i = 0; i < 4;)
 	{
-		key=KEY_Scan(0);		//得到键值
-	  if(key)
-		{						   
-			switch(key)
-			{				 
-				case KEY0_PRES:	//控制蜂鸣器
-					BEEP=!BEEP;
-					break;
-				case KEY1_PRES:	//控制LED0翻转
-					LED0=!LED0;
-					break;
-				case KEY2_PRES:	//控制LED1翻转	 
-					LED1=!LED1;
-					break;
-				case KEY3_PRES:	//控制LED2翻转 
-					LED2=!LED2;
-					break;
+		for (uint32_t j = 0; j < 4; j++)
+		{
+
+			led_state[j] = 1;
+			if (j == i)
+			{
+				led_state[j] = 0;
 			}
-		}else delay_ms(10); 
+		}
+
+		if (flag)
+		{
+			LED0 = led_state[0];
+			LED1 = led_state[1];
+			LED2 = led_state[2];
+			LED3 = led_state[3];
+		}
+		else
+		{
+			LED3 = led_state[0];
+			LED2 = led_state[1];
+			LED1 = led_state[2];
+			LED0 = led_state[3];
+		}
+
+		i++;
+		if (i == 4)
+		{
+			flag = !flag;
+		}
+
+		i = i % 4;
+		delay_ms(120);
 	}
 }
 
+/**
+ * @brief 主函数
+ */
+int main(void)
+{
+	u8 key;					 // 保存键值
+	delay_init(168); // 初始化延时函数
+	LED_Init();			 // 初始化LED端口
+	BEEP_Init();		 // 初始化蜂鸣器端口
+	KEY_Init();			 // 初始化与按键连接的硬件接口
+	LED_Set_All(1);
+	LED0 = 0;
+	LED1 = 0;
+	LED2 = 0;
+	// 先点亮红灯
+
+	ls();
+	while (1)
+	{
+		key = KEY_Scan(0); // 得到键值
+		if (key)
+		{
+			switch (key)
+			{
+			case KEY0_PRES: // 控制蜂鸣器
+				BEEP = !BEEP;
+				break;
+			case KEY1_PRES: // 控制LED0翻转
+				LED0 = !LED0;
+				break;
+			case KEY2_PRES: // 控制LED1翻转
+				LED1 = !LED1;
+				break;
+			case KEY3_PRES: // 控制LED2翻转
+				LED2 = !LED2;
+				break;
+			}
+		}
+		else
+			delay_ms(10);
+	}
+}
