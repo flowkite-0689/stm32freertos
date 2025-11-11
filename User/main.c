@@ -58,7 +58,7 @@ void ls_interruptible(void)
 	for (uint32_t i = 0; i < 4;)
 	{
 		// 检查是否有按键中断，如果有则退出
-		if (KEY_Get_Trig_Flag() != 0)
+		if (KEY_Get() != 0)
 		{
 			return;
 		}
@@ -118,7 +118,7 @@ int main(void)
 
 	while (1)
 	{
-		key = KEY_Get_Trig_Flag(); // 从中断获取键值
+		key = KEY_Get(); // 从中断获取键值
 		if (key)
 		{
 			switch (key)

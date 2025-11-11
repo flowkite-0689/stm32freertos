@@ -1,5 +1,7 @@
 {
   "files.associations": {
-    "myinit.h": "c"
+    "myinit.h": "c",
+    "stm32f4xx_gpio.h": "c",
+    "stm32f4xx.h": "c"
   }
 }

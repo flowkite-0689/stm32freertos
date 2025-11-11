@@ -232,10 +232,11 @@ void EXTI4_IRQHandler(void);  // KEY3 (PE4) 外部中断
  * @return 按键值：1,2,4,8 对应 KEY0~KEY3，无按键返回 0
  * @note 调用后会自动清除标志，线程安全
  */
-static inline uint8_t KEY_Get_Trig_Flag(void)
+static inline uint8_t KEY_Get(void)
 {
     uint8_t trig = key_trig_flag;
     key_trig_flag = 0;          // 清除标志
     return trig;
 }
+
 #endif /* _KEY_H_ */
