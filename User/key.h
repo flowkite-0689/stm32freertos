@@ -197,6 +197,13 @@ uint8_t KEY_Get_Value(uint8_t mode);
 int8_t KEY_EXTI_Init(void);
 
 /**
+ * @brief 按键消抖定时器初始化
+ * @return 错误码：KEY_OK-成功，其他-失败
+ * @note 使用TIM5作为20ms定时器进行消抖确认
+ */
+int8_t KEY_Debounce_Timer_Init(void);
+
+/**
  * @brief 获取中断按键值
  * @return 按键按键值（KEY0_PRES~KEY3_PRES），0表示无按键事件
  * @note 非阻塞方式获取按键中断事件
@@ -209,6 +216,7 @@ uint8_t KEY_Get_Interrupt_Value(void);
 
 extern volatile uint8_t key_interrupt_flag;   // 按键中断标志
 extern volatile uint8_t key_interrupt_value;  // 按键中断值
+extern volatile uint8_t key_trig_flag;        // 按键触发标志
 
 // ==================================
 // 按键中断服务程序声明
@@ -219,4 +227,15 @@ void EXTI2_IRQHandler(void);  // KEY1 (PE2) 外部中断
 void EXTI3_IRQHandler(void);  // KEY2 (PE3) 外部中断
 void EXTI4_IRQHandler(void);  // KEY3 (PE4) 外部中断
 
+/**
+ * @brief 获取定时器消抖后的按键触发事件（推荐使用！）
+ * @return 按键值：1,2,4,8 对应 KEY0~KEY3，无按键返回 0
+ * @note 调用后会自动清除标志，线程安全
+ */
+static inline uint8_t KEY_Get_Trig_Flag(void)
+{
+    uint8_t trig = key_trig_flag;
+    key_trig_flag = 0;          // 清除标志
+    return trig;
+}
 #endif /* _KEY_H_ */
