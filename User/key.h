@@ -203,19 +203,12 @@ int8_t KEY_EXTI_Init(void);
  */
 int8_t KEY_Debounce_Timer_Init(void);
 
-/**
- * @brief 获取中断按键值
- * @return 按键按键值（KEY0_PRES~KEY3_PRES），0表示无按键事件
- * @note 非阻塞方式获取按键中断事件
- */
-uint8_t KEY_Get_Interrupt_Value(void);
+
 
 // ==================================
 // 按键中断相关全局变量声明
 // ==================================
 
-extern volatile uint8_t key_interrupt_flag;   // 按键中断标志
-extern volatile uint8_t key_interrupt_value;  // 按键中断值
 extern volatile uint8_t key_trig_flag;        // 按键触发标志
 
 // ==================================

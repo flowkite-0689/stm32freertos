@@ -483,7 +483,7 @@ int8_t KEY_EXTI_Init(void)
 
     // // 1. 初始化所有按键GPIO（如果尚未初始化）
     // int8_t result = KEY_Init();
-    // if (result != KEY_OK) return result;
+    // if (result != KEY_OK) return result;//服了。。
 
     // 2. 使能SYSCFG时钟
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
@@ -502,8 +502,8 @@ int8_t KEY_EXTI_Init(void)
 
     // 配置KEY0中断优先级 - 降低优先级，避免影响系统复位
     NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 5;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 5;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 5;//抢占优先级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;//子优先级
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
@@ -514,7 +514,7 @@ int8_t KEY_EXTI_Init(void)
     EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling; // 下降沿触发
     EXTI_Init(&EXTI_InitStructure);
 
-    // 配置KEY1中断优先级 - 降低优先级
+    // 配置KEY1中断优先级 
 
     NVIC_InitStructure.NVIC_IRQChannel = EXTI2_IRQn;
      
@@ -553,19 +553,6 @@ int8_t KEY_EXTI_Init(void)
  * @return 按键按键值（KEY0_PRES~KEY3_PRES），0表示无按键事件
  * @note 非阻塞方式获取按键中断事件
  */
-uint8_t KEY_Get_Interrupt_Value(void)
-{
-    uint8_t temp_value = 0;
-
-    if (key_interrupt_flag)
-    {
-        temp_value = key_interrupt_value;
-        key_interrupt_flag = 0;  // 清除标志
-        key_interrupt_value = 0; // 清除值
-    }
-
-    return temp_value;
-}
 
 // ==================================
 // 按键中断服务程序实现
@@ -616,7 +603,7 @@ int8_t KEY_Debounce_Timer_Init(void)
     // 使能TIM5时钟
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
     
-    // 假设系统时钟 168MHz，APB1 分频后 84MHz
+    // 系统时钟 168MHz，APB1 分频后 84MHz
     TIM_TimeBaseStructure.TIM_Period = 20000 - 1;        // 20ms
     TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;        // 1MHz计数频率
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
