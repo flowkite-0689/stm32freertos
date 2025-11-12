@@ -137,9 +137,27 @@ void PendSV_Handler(void)
   * @brief  This function handles SysTick Handler.
   * @param  None
   * @retval None
+  * @note   处理SysTick定时器中断，用于精确延时
+  *         1. 递减TimingDelay变量，用于delay_us()函数的延时控制
+  *         2. 累计Systick_count变量，用于记录毫秒数
+  *         3. SysTick中断频率为100kHz（每10us触发一次）
   */
 void SysTick_Handler(void)
 {
+    static uint32_t i = 0;
+    
+    extern __IO uint32_t TimingDelay;
+    
+    if (TimingDelay > 0)
+    {
+        TimingDelay--;
+    }
+    if(++i >= 1000 /10)  // 每100次中断为1ms
+    {
+        i = 0 ;
+        extern __IO uint32_t Systick_count;
+        Systick_count++;
+    }
 }
 
 /******************************************************************************/

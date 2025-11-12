@@ -94,7 +94,7 @@ void ls_interruptible(void)
 		}
 
 		i = i % 4;
-		delay_ms(120);
+		delay_ms(130);
 	}
 }
 
@@ -104,7 +104,7 @@ void ls_interruptible(void)
 int main(void)
 {
 	u8 key;					 // 保存键值
-	delay_init(168); // 初始化延时函数
+	SysTick_Init(); // 初始化延时函数
 	LED_Init();			 // 初始化LED端口
 	BEEP_Init();		 // 初始化蜂鸣器端口
 	KEY_Init();			 // 初始化与按键连接的硬件接口
@@ -115,7 +115,7 @@ int main(void)
 	LED2 = 0;	// 熄灭LED2
 	LED3 = 1;	// 熄灭LED3
 	// 实际效果：LED0、LED1、LED2亮，LED3灭（红色LED3未点亮）
-
+  
 	while (1)
 	{
 		key = KEY_Get(); // 从中断获取键值

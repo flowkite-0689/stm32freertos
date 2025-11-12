@@ -49,4 +49,9 @@ void delay_ms(uint32_t ms);
  */
 void delay_us(uint32_t us);
 
+
+
+void SysTick_Init(void);
+uint32_t get_systick(void);
+
 #endif /* _DELAY_H_ */
