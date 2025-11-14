@@ -208,6 +208,11 @@
 #define KEY1 GPIO_IN(KEY1_PORT, KEY1_NUM)
 #define KEY2 GPIO_IN(KEY2_PORT, KEY2_NUM)
 #define KEY3 GPIO_IN(KEY3_PORT, KEY3_NUM)
+
+// DHT11位带操作宏定义
+#define PGout(n) GPIO_OUT(GPIOG, n)  // 输出
+#define PGin(n)  GPIO_IN(GPIOG, n)   // 输入
+
 /** @} */
 
 #endif

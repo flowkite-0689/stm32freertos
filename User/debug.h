@@ -1,3 +1,5 @@
+// 移植到uart_dma.c中，以下头文件被注释掉以避免冲突
+/*
 #ifndef DEBUG_H
 #define DEBUG_H
 
@@ -14,3 +16,4 @@ uint8_t Usart1_Receive_String(char *buffer, uint16_t size);
 void Process_Usart_Command(void);
 
 #endif
+*/

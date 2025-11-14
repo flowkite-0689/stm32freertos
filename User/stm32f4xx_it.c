@@ -29,6 +29,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_it.h"
+#include "delay.h"
 
 /** @addtogroup Template_Project
   * @{
@@ -146,8 +147,6 @@ void SysTick_Handler(void)
 {
     static uint32_t i = 0;
     
-    extern __IO uint32_t TimingDelay;
-    
     if (TimingDelay > 0)
     {
         TimingDelay--;
@@ -155,7 +154,6 @@ void SysTick_Handler(void)
     if(++i >= 1000 /10)  // 每100次中断为1ms
     {
         i = 0 ;
-        extern __IO uint32_t Systick_count;
         Systick_count++;
     }
 }

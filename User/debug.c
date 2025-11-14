@@ -1,3 +1,5 @@
+// 移植到uart_dma.c中，以下函数被注释掉以避免冲突
+/*
 #include "debug.h"
 #include <stdio.h>
 #include <string.h>
@@ -227,12 +229,13 @@ void Usart1_Send_String(char *string)
 // 重定向c库函数printf到串口，重定向后可使用printf函数
 int fputc(int ch, FILE *f)
 {
-    /* 发送一个字节数据到串口 */
+    // 发送一个字节数据到串口
     USART_SendData(USART1, (uint8_t)ch);
 
-    /* 等待发送完毕 */
+    // 等待发送完毕
     while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
         ;
 
     return (ch);
 }
+*/
