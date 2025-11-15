@@ -68,14 +68,18 @@ int main(void)
 	LED_Init();			 // 初始化LED端
 	KEY_Init();			 // 初始化与按键连接的硬件接口
 	DHT11_Init();      // 初始化DHT11（在延时函数初始化后）
-	LED_Set_All(0);	 // 点亮所有LED（低电平点亮）
+	LED_Set_All(1);	 // 点亮所有LED（低电平点亮）
 	// 实际效果：LED0、LED1、LED2亮，LED3灭（红色LED3未点亮）
 	TIM13_PWM_Init();
   TIM14_PWM_Init();
 	// 发送初始化完成消息
 	printf("System Ready - Send commands to control LEDs\r\n");
 	Usart1_Send_String("Press keys to control remote LEDs\r\n");
-	DHT11_Data_TypeDef DHT11_Data;
+
+	// 函数声明 - 不包含.c文件，只声明函数
+	extern void play_example_melody(void);
+	extern void play_timing_demo(void);
+	extern void play_haruhi_correct(void);
 
 	while (1)
 	{
@@ -87,37 +91,31 @@ int main(void)
 		// 处理串口命令
 		Process_Usart_Command();
 		
-		if (key)
+	if (key)
+	{
+		switch (key)
 		{
-			uint8_t result;
-			switch (key)
-			{
-			case KEY0_PRES: // 读取温湿度数据
-				
-				printf("k0 pers\n");
-				result = Read_DHT11(&DHT11_Data);
-				if (result == 0) {
-					printf("Temperature: %d.%dC, Humidity: %d.%d\r\n",  DHT11_Data.temp_int,  DHT11_Data.temp_deci , DHT11_Data.humi_int,DHT11_Data.humi_deci );
-				} else {
-					printf("Failed to read DHT11 sensor data\r\n");
-				}
-				break;
-			case KEY1_PRES: // 控制LED1翻转
-				// Usart1_Send_String("1c\r\n");
-				printf("123456789qwertyuiopasdfgjj\n");
-				break;
 			case KEY2_PRES: // 控制LED2翻转
 				
 				printf("2c\r\n");
 					bbbb();
 			break;
+			case KEY1_PRES: // 播放时值演示
+				printf("1c\r\n");
+//				play_timing_demo();  // 演示不同时值符号
+				break;
+			case KEY0_PRES: // 播放《春日影》修正版
+				printf("k0 pers\n");
+				
+				break;
 			case KEY3_PRES: // 控制LED3翻转
 				printf("3c\r\n");
-				lllll();
+				printf("Playing 3h 2h_ 1h 2h_ | 3h_-_ 4h__ 3h_ 2h-\r\n");
+				play_example_melody();  // 播放nnnn.md示例乐谱
 				break;
-			}
 		}
-		else
-			delay_ms(10);
 	}
+	else
+		delay_ms(10);
+}
 }
