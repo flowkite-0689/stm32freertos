@@ -20,10 +20,6 @@ void Play_Melody(Note *melody, uint16_t length)
 {
     uint16_t i;
     for(i = 0; i < length; i++) {
-      if(KEY_Get())
-      {
-        return;
-      }
         Play_Note(melody[i].frequency, melody[i].duration);
     }
     Set_PWM_Frequency(0);  // 结束后停止发声
