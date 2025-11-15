@@ -2,6 +2,8 @@
   "files.associations": {
     "myinit.h": "c",
     "stm32f4xx_gpio.h": "c",
-    "stm32f4xx.h": "c"
+    "stm32f4xx.h": "c",
+    "led.h": "c",
+    "key.h": "c"
   }
 }

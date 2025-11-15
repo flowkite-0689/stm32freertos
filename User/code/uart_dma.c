@@ -339,6 +339,8 @@ uint8_t Usart1_Receive_String(char *buffer, uint16_t size)
     return 0;
 }
 
+
+//对收到的指令判别
 void Process_Usart_Command(void)
 {
     char cmd[64];

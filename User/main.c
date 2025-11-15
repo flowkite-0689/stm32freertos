@@ -1,13 +1,13 @@
-#include "led.h"
-#include "key.h"
-#include "beep.h"
+#include "code/led.h"
+#include "code/key.h"
+#include "code/beep.h"
 // #include "debug.h"  // 移植到uart_dma.h中
-#include "uart_dma.h"    // 使用DMA版本的调试函数
-#include "dht11.h"
+#include "code/uart_dma.h"    // 使用DMA版本的调试函数
+#include "code/dht11.h"
 #include <stdio.h>
-#include "timer_general.h"
-#include "htim.h"
-#include "music.h"
+#include "code/timer_general.h"
+#include "code/htim.h"
+#include "code/music.h"
 void bbbb()
 {
 	while (1)
