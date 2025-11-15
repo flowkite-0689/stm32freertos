@@ -24,7 +24,7 @@ void TIM13_PWM_Init(void)
     GPIO_PinAFConfig(GPIOF, GPIO_PinSource8, GPIO_AF_TIM13);
     
     // 4. 配置TIM13时基单元 - 修复：使用最大Period值
-    TIM_TimeBaseStructure.TIM_Prescaler = 32 - 1;           	// 预分频器25-1，84MHz→1MHz
+    TIM_TimeBaseStructure.TIM_Prescaler = 24 - 1;           	// 预分频器25-1，84MHz→1MHz
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; // 向上计数
     TIM_TimeBaseStructure.TIM_Period = 65535;             		// 修复：使用最大值，让Set_PWM_Frequency动态控制
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;     // 时钟分频
