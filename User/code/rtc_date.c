@@ -3,6 +3,10 @@
 
 #define RTC_BKP_DR0_DATA ((uint32_t)0x32F3) // 标记RTC已初始化的标志
 
+// 全局RTC时间结构体定义
+RTC_TimeTypeDef g_RTC_Time;
+RTC_DateTypeDef g_RTC_Date;
+
 void RTC_Date_Init(void)
 {
     // 1) 使能PWR和备份寄存器时钟
@@ -65,17 +69,15 @@ void RTC_Date_Init(void)
 
 void RTC_Date_Get(void)
 {
-    // 1）读取时间
-    RTC_TimeTypeDef RTC_TimeStruct;
-    RTC_GetTime(RTC_Format_BIN, &RTC_TimeStruct); // RTC_Format_BIN表示二进制格式
+    // 1）读取时间并存储到全局变量
+    RTC_GetTime(RTC_Format_BIN, &g_RTC_Time);
 
-    // 2）读取日期
-    RTC_DateTypeDef RTC_DateStruct; // RTC_Format_BIN表示二进制格式
-    RTC_GetDate(RTC_Format_BIN, &RTC_DateStruct);
+    // 2）读取日期并存储到全局变量
+    RTC_GetDate(RTC_Format_BIN, &g_RTC_Date);
 
     // 3）输出时间
-    printf("Time: %02d:%02d:%02d\n", RTC_TimeStruct.RTC_Hours, RTC_TimeStruct.RTC_Minutes, RTC_TimeStruct.RTC_Seconds);
+    printf("Time: %02d:%02d:%02d\n", g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
 
     // 4）输出日期
-    printf("Date: %04d-%02d-%02d\n", RTC_DateStruct.RTC_Year + 2000, RTC_DateStruct.RTC_Month, RTC_DateStruct.RTC_Date);
+    printf("Date: %04d-%02d-%02d\n", g_RTC_Date.RTC_Year + 2000, g_RTC_Date.RTC_Month, g_RTC_Date.RTC_Date);
 }
