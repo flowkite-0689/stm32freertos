@@ -2,6 +2,7 @@
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_rcc.h"
 #include "stm32f4xx_adc.h"
+#include "code/delay.h"
 
 /**
   * @brief  ADC初始化函数
@@ -119,21 +120,44 @@ void ADC3_Init(void)
 }
 
 /**
-  * @brief  读取 ADC3 电压值（PF7）
+  * @brief  测试读取 ADC3 不同通道的电压值
+  * @param  channel: ADC通道 (0-15)
+  * @param  vref: 参考电压（如 3.3f）
+  * @retval 电压值（单位：V）
+  */
+float ADC3_ReadChannelVoltage(uint8_t channel, float vref)
+{
+    uint32_t timeout = 1000000; // 超时计数器
+    
+    // 清除之前的配置
+    ADC_RegularChannelConfig(ADC3, channel, 1, ADC_SampleTime_56Cycles);
+    
+    // 等待一点时间让配置生效
+    delay_ms(1);
+    
+    // 软件启动转换
+    ADC_SoftwareStartConv(ADC3);
+    
+    // 等待转换完成，添加超时保护
+    while(ADC_GetFlagStatus(ADC3, ADC_FLAG_EOC) == RESET && timeout--);
+    
+    if(timeout == 0) {
+        return -1.0f; // 超时，返回-1表示错误
+    }
+    
+    // 读取转换结果
+    uint16_t adcValue = ADC_GetConversionValue(ADC3);
+    
+    // 计算电压
+    return ((float)adcValue / 4095.0f) * vref;
+}
+
+/**
+  * @brief  读取 ADC3 电压值（PF7 - 通道5）
   * @param  vref: 参考电压（如 3.3f）
   * @retval 电压值（单位：V）
   */
 float ADC3_ReadVoltage(float vref)
 {
-    // 7）软件启动 ADC3 转换 
-    ADC_SoftwareStartConv(ADC3);  // ← ADC3
-    
-    // 等待转换完成
-    while(ADC_GetFlagStatus(ADC3, ADC_FLAG_EOC) == RESET);  // ← ADC3
-    
-    // 8）读取 ADC3 转换结果 
-    uint16_t adcValue = ADC_GetConversionValue(ADC3);       // ← ADC3
-
-    // 9）计算电压
-    return ((float)adcValue / 4095.0f) * vref;
+    return ADC3_ReadChannelVoltage(ADC_Channel_5, vref);
 }

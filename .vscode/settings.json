@@ -4,6 +4,7 @@
     "stm32f4xx_gpio.h": "c",
     "stm32f4xx.h": "c",
     "led.h": "c",
-    "key.h": "c"
+    "key.h": "c",
+    "sdl.h": "c"
   }
 }

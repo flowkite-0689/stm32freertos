@@ -5,4 +5,5 @@
 extern const unsigned char gImage_1[1024];
 extern const unsigned char logo[1024];
 extern const unsigned char gImage_bg[512];
+extern const unsigned char gImage_bgg[512] ;
 #endif

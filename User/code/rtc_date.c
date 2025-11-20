@@ -81,3 +81,62 @@ void RTC_Date_Get(void)
     // 4）输出日期
     printf("Date: %04d-%02d-%02d\n", g_RTC_Date.RTC_Year + 2000, g_RTC_Date.RTC_Month, g_RTC_Date.RTC_Date);
 }
+
+// 手动设置RTC时间
+void RTC_SetTime_Manual(uint8_t hours, uint8_t minutes, uint8_t seconds)
+{
+    // 参数检查
+    if (hours > 23) hours = 23;
+    if (minutes > 59) minutes = 59;
+    if (seconds > 59) seconds = 59;
+    
+    // 设置时间结构体
+    RTC_TimeTypeDef RTC_TimeStruct;
+    RTC_TimeStruct.RTC_H12 = RTC_H12_AM;          // 24小时制，设置为AM
+    RTC_TimeStruct.RTC_Hours = hours;
+    RTC_TimeStruct.RTC_Minutes = minutes;
+    RTC_TimeStruct.RTC_Seconds = seconds;
+    
+    // 设置RTC时间
+    RTC_SetTime(RTC_Format_BIN, &RTC_TimeStruct);
+    
+    printf("RTC Time set to: %02d:%02d:%02d\n", hours, minutes, seconds);
+}
+
+// 手动设置RTC日期
+void RTC_SetDate_Manual(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday)
+{
+    // 参数检查
+    if (year > 99) year = 99;
+    if (month < 1) month = 1;
+    if (month > 12) month = 12;
+    if (day < 1) day = 1;
+    if (day > 31) day = 31;
+    if (weekday < 1) weekday = 1;
+    if (weekday > 7) weekday = 7;
+    
+    // 设置日期结构体
+    RTC_DateTypeDef RTC_DateStruct;
+    RTC_DateStruct.RTC_Year = year;
+    RTC_DateStruct.RTC_Month = month;
+    RTC_DateStruct.RTC_Date = day;
+    RTC_DateStruct.RTC_WeekDay = weekday;
+    
+    // 设置RTC日期
+    RTC_SetDate(RTC_Format_BIN, &RTC_DateStruct);
+    
+    printf("RTC Date set to: %04d-%02d-%02d (Weekday: %d)\n", year + 2000, month, day, weekday);
+}
+
+// 手动设置完整的RTC日期时间
+void RTC_SetDateTime_Manual(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday,
+                           uint8_t hours, uint8_t minutes, uint8_t seconds)
+{
+    // 先设置日期
+    RTC_SetDate_Manual(year, month, day, weekday);
+    
+    // 再设置时间
+    RTC_SetTime_Manual(hours, minutes, seconds);
+    
+    printf("RTC DateTime set complete!\n");
+}

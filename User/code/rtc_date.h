@@ -19,4 +19,10 @@ extern RTC_DateTypeDef g_RTC_Date;
 void RTC_Date_Init(void);
 void RTC_Date_Get(void);
 
+// RTC时间修改函数
+void RTC_SetTime_Manual(uint8_t hours, uint8_t minutes, uint8_t seconds);
+void RTC_SetDate_Manual(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday);
+void RTC_SetDateTime_Manual(uint8_t year, uint8_t month, uint8_t day, uint8_t weekday,
+                           uint8_t hours, uint8_t minutes, uint8_t seconds);
+
 #endif
