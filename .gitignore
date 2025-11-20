@@ -40,3 +40,6 @@ Output/
 output/
 Project/JLinkLog.txt
 .vscode/settings.json
+
+./build/*
+.vscode/settings.json
