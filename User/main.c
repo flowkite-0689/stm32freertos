@@ -62,17 +62,18 @@ int main(void)
 			[2] = 50,		// MPU6050陀螺仪模式更新间隔
 			[3] = 1000, // 时间模式更新间隔
 			[5] = 1000};
-
+  uint32_t dht_timer=0;
+	uint32_t dht_interval= 3000;
 	uint32_t KEY_Get_timer = 0;
 	u8 flag_delay = 1;
 
 
 
 	//开机图像，oled输出
-OLED_Printf_Line(0,"     ^^    ^^   ");
-OLED_Printf_Line(1,"        --   ");
+OLED_ShowPicture(0,0,64,64,gImage_bg,1);
+delay_ms(1000);
  OLED_Refresh(); // 更新显存，后才显示设置内容
-        delay_ms(5000);
+       
         OLED_Clear();		// 清屏
 	while (1) // 主循环
 	{
@@ -94,6 +95,8 @@ OLED_Printf_Line(1,"        --   ");
 		{
 			printf("Mode changed from %d to %d\r\n", last_mode, mode);
 			last_mode = mode;
+			OLED_Refresh(); 
+		   OLED_Clear();
 		}
 
 		uint32_t current_time = get_systick();
@@ -115,8 +118,15 @@ OLED_Printf_Line(1,"        --   ");
 			}
 			break;
 
-		case 2: // MPU6050陀螺仪模式
-			oled_demo();
+		case 2: // 展示图片
+			if(current_time - mode_timers[2] > MODE_INTERVAL[3])
+			{
+				 mode_timers[2] =current_time;
+				OLED_ShowPicture(0,0,58,58,gImage_1,1);
+				OLED_Refresh(); // 更新显存，后才显示设置内容
+        
+       	OLED_Refresh_Dirty();
+			}	
 			break;
 
 		case 3: // 时间模式
@@ -148,14 +158,17 @@ OLED_Printf_Line(1,"        --   ");
 				mode_timers[5] = current_time;
 				
 				// 增加延时，避免读取过于频繁
-				delay_ms(10);
+				
 				
 				// 读取RTC时间
 				RTC_Date_Get();
-				
+				int result=0;
 				// 读取DHT11温湿度数据
-				int result = Read_DHT11(&dhtdata);
-				
+				if(current_time - dht_timer >dht_interval )
+				{
+					dht_timer = current_time;
+				    result = Read_DHT11(&dhtdata);
+				}
 				// OLED_Clear(); // 注释掉整屏清除，改用局部刷新
 				
 				if (result == 0)
@@ -185,11 +198,15 @@ OLED_Printf_Line(1,"        --   ");
 				}
 				else
 				{
+						OLED_Refresh();
+						OLED_Clear();
 					// 读取失败，显示日期时间和错误信息
-					OLED_Printf_Line(0, "%02d/%02d/%04d", 
-					                 g_RTC_Date.RTC_Date,
-					                 g_RTC_Date.RTC_Month,
-					                 g_RTC_Date.RTC_Year + 2000);
+					OLED_Printf_Line(0, "%02d/%02d/%02d", 
+						
+					                 g_RTC_Date.RTC_Year + 2000,
+													  g_RTC_Date.RTC_Month,
+					                 g_RTC_Date.RTC_Date
+					                );
 					OLED_Printf_Line(1, "%02d:%02d:%02d", 
 					                 g_RTC_Time.RTC_Hours,
 					                 g_RTC_Time.RTC_Minutes, 

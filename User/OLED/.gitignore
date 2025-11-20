@@ -1,0 +1,107 @@
+# 模拟器构建输出
+模拟器/build/
+模拟器/CMakeFiles/
+模拟器/CMakeCache.txt
+模拟器/cmake_install.cmake
+模拟器/Makefile
+模拟器/*.cmake
+
+# 模拟器可执行文件
+模拟器/*.exe
+模拟器/OLED_Enhanced_Simulator
+模拟器/oled_simulator_enhanced
+
+# 对象文件和库文件
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+# 临时文件
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# IDE和编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cproject
+.project
+
+# 日志文件
+*.log
+
+# 模拟器配置文件（由CMake生成）
+模拟器/config.h
+
+# 打包文件
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+*.dmg
+*.pkg
+
+# 调试文件
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# 测试覆盖文件
+gcov/
+*.gcda
+*.gcno
+*.gcov
+lcov/
+
+# 性能分析文件
+*.prof
+
+# 自动生成的文档
+docs/doxygen/
+
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 备份文件
+*.bak
+*.backup
+*.old
+
+# STM32特定文件
+*.lst
+*.map
+*.d
+*.iex
+*.hex
+*.bin
+*.out
+*.elf
+
+# Keil / IAR / STM32CubeIDE项目文件
+*.uvprojx
+*.uvoptx
+*.ewp
+*.eww
+*.cproject
+*.project
+*.launch
+
+# FreeRTOS特定文件
+FreeRTOS/
+Middlewares/

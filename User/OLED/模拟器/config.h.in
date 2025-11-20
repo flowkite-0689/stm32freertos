@@ -1,0 +1,26 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// 项目版本信息
+#define PROJECT_NAME "@PROJECT_NAME@"
+#define PROJECT_VERSION "@PROJECT_VERSION@"
+#define VERSION_MAJOR @VERSION_MAJOR@
+#define VERSION_MINOR @VERSION_MINOR@
+#define VERSION_PATCH @VERSION_PATCH@
+
+// 构建配置
+#cmakedefine CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+#cmakedefine CMAKE_C_COMPILER "@CMAKE_C_COMPILER@"
+
+// 功能开关
+#cmakedefine ENABLE_LOG
+#cmakedefine DEBUG
+
+// SDL2信息
+#define SDL2_INCLUDE_DIR "@SDL2_INCLUDE_DIRS@"
+#define SDL2_LIBRARY_DIR "@SDL2_LIBRARIES@"
+
+// 构建时间戳
+#define BUILD_TIMESTAMP __DATE__ " " __TIME__
+
+#endif // CONFIG_H

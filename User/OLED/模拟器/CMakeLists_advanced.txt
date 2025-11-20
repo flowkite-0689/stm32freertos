@@ -1,0 +1,203 @@
+cmake_minimum_required(VERSION 3.10)
+project(OLED_Enhanced_Simulator C)
+
+# 设置版本信息
+set(PROJECT_VERSION_MAJOR 1)
+set(PROJECT_VERSION_MINOR 0)
+set(PROJECT_VERSION_PATCH 0)
+set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+
+# 设置C标准
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+# 构建选项
+option(BUILD_TESTS "构建测试" OFF)
+option(ENABLE_SIMULATOR_LOG "启用模拟器日志" ON)
+option(USE_SYSTEM_SDL2 "使用系统SDL2" ON)
+
+# 根据构建类型设置编译选项
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g -O0 -DDEBUG")
+else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g -O2 -DNDEBUG")
+endif()
+
+# 查找SDL2
+if(USE_SYSTEM_SDL2)
+    find_package(SDL2 REQUIRED)
+else()
+    # 如果需要，可以添加自定义SDL2路径的查找
+    message(WARNING "使用自定义SDL2路径功能尚未实现")
+    find_package(SDL2 REQUIRED)
+endif()
+
+# 检查SDL2是否找到
+if(NOT SDL2_FOUND)
+    message(FATAL_ERROR "SDL2未找到，请安装SDL2开发库")
+endif()
+
+# 添加主可执行文件
+add_executable(${PROJECT_NAME} oled_simulator_enhanced.c)
+
+# 设置源文件属性
+set_source_files_properties(oled_simulator_enhanced.c PROPERTIES
+    LANGUAGE C
+)
+
+# 链接SDL2库
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+
+# 数学库（在Linux/macOS上需要）
+if(UNIX AND NOT APPLE)
+    target_link_libraries(${PROJECT_NAME} PRIVATE m)
+endif()
+
+# 包含头文件目录
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../..
+    ${SDL2_INCLUDE_DIRS}
+)
+
+# 编译定义
+target_compile_definitions(${PROJECT_NAME} PRIVATE 
+    OLED_SIMULATOR=1
+    PROJECT_VERSION="${PROJECT_VERSION}"
+)
+
+# 如果启用日志
+if(ENABLE_SIMULATOR_LOG)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ENABLE_LOG=1)
+endif()
+
+# 设置输出目录
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+)
+
+# 添加版本信息到目标
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+    VERSION_MINOR=${PROJECT_VERSION_MINOR}
+    VERSION_PATCH=${PROJECT_VERSION_PATCH}
+)
+
+# 如果启用测试
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+# 安装规则
+install(TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION bin
+    COMPONENT Runtime
+)
+
+# 创建安装组件
+install(COMPONENT Documentation
+    FILES README.md
+    DESTINATION share/doc/${PROJECT_NAME}
+)
+
+# 打包设置
+set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "OLED增强模拟器")
+set(CPACK_PACKAGE_VENDOR "OLED Simulator Team")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+
+# 根据系统设置打包器
+if(WIN32)
+    set(CPACK_GENERATOR "ZIP;NSIS")
+elseif(APPLE)
+    set(CPACK_GENERATOR "DragNDrop;TGZ")
+else()
+    set(CPACK_GENERATOR "TGZ;DEB;RPM")
+endif()
+
+include(CPack)
+
+# 自定义目标
+
+# 运行模拟器
+add_custom_target(run
+    COMMAND ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}
+    DEPENDS ${PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "运行OLED增强模拟器"
+)
+
+# 调试运行
+add_custom_target(debug-run
+    COMMAND ${CMAKE_COMMAND} -E env
+            "SDL_VIDEODRIVER=dummy" 
+            ${CMAKE_BINARY_DIR}/bin/${PROJECT_NAME}
+    DEPENDS ${PROJECT_NAME}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "无头模式运行模拟器（用于调试）"
+)
+
+# 检查代码
+find_program(CHECK_PROGRAM NAMES clang-format cppcheck)
+if(CHECK_PROGRAM)
+    add_custom_target(format
+        COMMAND clang-format -i oled_simulator_enhanced.c
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "格式化代码"
+    )
+    
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_custom_target(analyze
+            COMMAND cppcheck --enable=all --std=c99 oled_simulator_enhanced.c
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "静态分析代码"
+        )
+    endif()
+endif()
+
+# 清理目标
+add_custom_target(distclean
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
+    COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}
+    COMMENT "完全清理构建目录"
+)
+
+# 生成配置文件
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+    "${CMAKE_BINARY_DIR}/config.h"
+)
+
+# 打印配置信息
+message(STATUS "==================== OLED增强模拟器配置 ====================")
+message(STATUS "项目名称: ${PROJECT_NAME}")
+message(STATUS "项目版本: ${PROJECT_VERSION}")
+message(STATUS "构建类型: ${CMAKE_BUILD_TYPE}")
+message(STATUS "编译器: ${CMAKE_C_COMPILER}")
+message(STATUS "SDL2库: ${SDL2_LIBRARIES}")
+message(STATUS "SDL2头文件: ${SDL2_INCLUDE_DIRS}")
+message(STATUS "启用日志: ${ENABLE_SIMULATOR_LOG}")
+message(STATUS "构建测试: ${BUILD_TESTS}")
+message(STATUS "使用系统SDL2: ${USE_SYSTEM_SDL2}")
+message(STATUS "===============================================================")
+message(STATUS "")
+message(STATUS "构建命令:")
+message(STATUS "  mkdir build && cd build")
+message(STATUS "  cmake .. [选项]")
+message(STATUS "  make")
+message(STATUS "")
+message(STATUS "可用选项:")
+message(STATUS "  -DBUILD_TESTS=ON                # 启用测试")
+message(STATUS "  -DENABLE_SIMULATOR_LOG=OFF       # 禁用日志")
+message(STATUS "  -DUSE_SYSTEM_SDL2=OFF           # 使用自定义SDL2")
+message(STATUS "")
+message(STATUS "自定义目标:")
+message(STATUS "  make run                        # 运行模拟器")
+message(STATUS "  make debug-run                  # 无头模式运行（调试）")
+message(STATUS "  make format                     # 格式化代码")
+message(STATUS "  make distclean                  # 完全清理")
+message(STATUS "  make package                    # 创建安装包")
