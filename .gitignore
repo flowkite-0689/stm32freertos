@@ -43,3 +43,4 @@ Project/JLinkLog.txt
 
 ./build/*
 .vscode/settings.json
+build/
