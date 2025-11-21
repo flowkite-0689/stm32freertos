@@ -8,5 +8,6 @@
 #include "flashlight.h"
 #include "alarm_menu.h"
 #include "step.h"
+#include "alarm.h"
 
 #endif

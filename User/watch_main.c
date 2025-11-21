@@ -5,6 +5,11 @@
 #include "code/rtc_date.h"
 #include "oled.h"
 #include "oled_print.h"
+#include "ui/setting.h"
+#include "ui/flashlight.h"
+#include "ui/alarm_menu.h"
+#include "ui/step.h"
+#include "ui/alarm.h"
 
 /**
  * @brief 电子手表主函数
@@ -325,46 +330,42 @@ void Update_Display(void)
 }
 
 /**
- * @brief 主函数
- */
+  * @brief  主函数
+  */
 int main(void)
-{
+{ 
+    u8 key;
+    
     // 系统初始化
-    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-    debug_init();
+    delay_init(168);        // 初始化延时函数
+    uart_dma_init(115200);  // 初始化串口DMA
+    OLED_Init();            // 初始化OLED
+    KEY_Init();             // 初始化按键
+    RTC_Date_Init();        // 初始化RTC
+    //BEEP_Init();          // 初始化蜂鸣器
     
-    SysTick_Init();   // 初始化滴时器
-    KEY_Init();       // 初始化按键的硬件接口
-    RTC_Date_Init();  // 初始化RTC
-    OLED_Init();      // 初始化OLED屏幕
-    OLED_Clear();     // 清除屏幕
+    // 初始化闹钟系统
+    Alarms_Init();
     
-    printf("Watch initializing...\r\n");
-    
-    // 初始显示
-    OLED_Printf_Line(0, " DIGITAL WATCH ");
-    OLED_Printf_Line(1, "  Initializing ");
-    OLED_Printf_Line(2, "   Please Wait ");
-    OLED_Printf_Line(3, "   Version 1.0 ");
-    OLED_Refresh();
-    
-    delay_ms(1000);
-    OLED_Clear();
+    printf("System Init OK!\r\n");
     
     // 显示启动画面
-    OLED_Printf_Line(0, "  WATCH READY! ");
-    OLED_Printf_Line(1, "  Press KEY0 ");
-    OLED_Printf_Line(2, " to Change Mode ");
-    OLED_Printf_Line(3, "  Press KEY3 Set ");
-    OLED_Refresh();
-    
-    delay_ms(2000);
-    OLED_Clear();
+    Display_Startup_Screen();
     
     // 主循环
-    while (1) {
-        Handle_Keys();            // 处理按键输入
-        Update_Display();         // 更新显示
+    while(1)
+    {
+        delay_ms(10);
+        
+        // 检查是否有闹钟触发
+        Alarm_Check();
+        
+        if((key = KEY_Get()) != 0)
+        {
+            Handle_Keys();
+        }
+        
+        Update_Display();
         
         // 模式切换时清屏
         if(current_mode != last_mode) {
@@ -374,8 +375,5 @@ int main(void)
         
         // 刷新OLED显示
         OLED_Refresh_Dirty();
-        
-        // 短暂延时，减少CPU占用
-        delay_ms(10);
     }
 }

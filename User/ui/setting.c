@@ -77,13 +77,10 @@ void Display_Set_Time(void)
             break;
     }
     
-    // 只在初始化时显示标题和提示
-    static u8 initialized = 0;
-    if (!initialized) {
+   
         OLED_Printf_Line(0, "   SET TIME");
         OLED_Printf_Line(3, "KEY0:+ KEY1:- KEY2:OK");
-        initialized = 1;
-    }
+   
     
     // 刷新OLED显示
     OLED_Refresh_Dirty();
@@ -122,20 +119,11 @@ void Display_Set_Date(void)
 
             break;
     }
-    
-    // 只在初始化时显示标题和提示
-    static u8 initialized = 0;
-    if (!initialized) {
+
+   
         OLED_Printf_Line(0, "   SET DATE");
-        if (set_date_step != 3) {
+       
             OLED_Printf_Line(3, "KEY0:+ KEY1:- KEY2:OK");
-        }
-        initialized = 1;
-    } else if (set_date_step != 3) {
-        // 非星期设置时恢复提示行
-        OLED_Clear_Line(3);
-        OLED_Printf_Line(3, "KEY0:+ KEY1:- KEY2:OK");
-    }
     
     // 刷新OLED显示
     OLED_Refresh_Dirty();
@@ -161,6 +149,7 @@ void Process_Set_Time(void)
     Display_Set_Time();
     
     while (1) {
+        delay_ms(10);
         if ((key = KEY_Get())!=0) {
             printf("Key pressed: %d\n", key);  // 调试信息
             switch (key) {
@@ -235,6 +224,7 @@ void Process_Set_Date(void)
     Display_Set_Date();
     
     while (1) {
+        delay_ms(10);
         if ((key = KEY_Get())!=0) {
             printf("Key pressed: %d\n", key);  // 调试信息
             switch (key) {
@@ -375,7 +365,7 @@ void setting()
  
   while (1)
   {
-
+    delay_ms(10);
     if (flag_RE)
     {
        OLED_Clear();

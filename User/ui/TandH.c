@@ -15,7 +15,7 @@ debug_init();
  
   while (1)
   {
-
+delay_ms(10);
     if (key =KEY_Get())
     {
       if (key == KEY2_PRES)
