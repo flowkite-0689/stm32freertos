@@ -90,6 +90,12 @@ void RTC_SetTime_Manual(uint8_t hours, uint8_t minutes, uint8_t seconds)
     if (minutes > 59) minutes = 59;
     if (seconds > 59) seconds = 59;
     
+    // 解除RTC写保护
+    PWR_BackupAccessCmd(ENABLE);
+    
+    // 进入初始化模式
+    RTC_WriteProtectionCmd(DISABLE);
+    
     // 设置时间结构体
     RTC_TimeTypeDef RTC_TimeStruct;
     RTC_TimeStruct.RTC_H12 = RTC_H12_AM;          // 24小时制，设置为AM
@@ -99,6 +105,9 @@ void RTC_SetTime_Manual(uint8_t hours, uint8_t minutes, uint8_t seconds)
     
     // 设置RTC时间
     RTC_SetTime(RTC_Format_BIN, &RTC_TimeStruct);
+    
+    // 重新启用写保护
+    RTC_WriteProtectionCmd(ENABLE);
     
     printf("RTC Time set to: %02d:%02d:%02d\n", hours, minutes, seconds);
 }
@@ -115,6 +124,12 @@ void RTC_SetDate_Manual(uint8_t year, uint8_t month, uint8_t day, uint8_t weekda
     if (weekday < 1) weekday = 1;
     if (weekday > 7) weekday = 7;
     
+    // 解除RTC写保护
+    PWR_BackupAccessCmd(ENABLE);
+    
+    // 进入初始化模式
+    RTC_WriteProtectionCmd(DISABLE);
+    
     // 设置日期结构体
     RTC_DateTypeDef RTC_DateStruct;
     RTC_DateStruct.RTC_Year = year;
@@ -124,6 +139,9 @@ void RTC_SetDate_Manual(uint8_t year, uint8_t month, uint8_t day, uint8_t weekda
     
     // 设置RTC日期
     RTC_SetDate(RTC_Format_BIN, &RTC_DateStruct);
+    
+    // 重新启用写保护
+    RTC_WriteProtectionCmd(ENABLE);
     
     printf("RTC Date set to: %04d-%02d-%02d (Weekday: %d)\n", year + 2000, month, day, weekday);
 }

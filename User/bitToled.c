@@ -15,6 +15,20 @@
 #include "logo.h"
 
 /**
+ * @brief 获取星期名称
+ * @param weekday 星期几（1-7，1=星期一）
+ * @return 星期名称字符串
+ */
+static const char* get_weekday_name(u8 weekday)
+{
+    static const char* weekday_names[] = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
+    if (weekday >= 1 && weekday <= 7) {
+        return weekday_names[weekday - 1];
+    }
+    return "---";
+}
+
+/**
  * @brief 主函数
  */
 int main(void)
@@ -198,11 +212,11 @@ int main(void)
 				if (result == 0)
 				{
 					// 在OLED上显示日期、时间和温湿度
-					OLED_Printf_Line(0, "%02d/%02d/%02d",
-
+					OLED_Printf_Line(0, "%02d/%02d/%02d %s",
 													 g_RTC_Date.RTC_Year + 2000,
 													 g_RTC_Date.RTC_Month,
-													 g_RTC_Date.RTC_Date);
+													 g_RTC_Date.RTC_Date,
+													 get_weekday_name(g_RTC_Date.RTC_WeekDay));
 					OLED_Printf_Line(1, "%02d:%02d:%02d",
 													 g_RTC_Time.RTC_Hours,
 													 g_RTC_Time.RTC_Minutes,
@@ -213,8 +227,9 @@ int main(void)
 					OLED_Printf_Line(3, "Mode5: Date&Time&TH");
 
 					// 同时通过串口输出
-					printf("Mode 5 - Date: %04d-%02d-%02d %02d:%02d:%02d, Temp: %d.%dC, Humi: %d.%d%%\r\n",
+					printf("Mode 5 - Date: %04d-%02d-%02d(%s) %02d:%02d:%02d, Temp: %d.%dC, Humi: %d.%d%%\r\n",
 								 g_RTC_Date.RTC_Year + 2000, g_RTC_Date.RTC_Month, g_RTC_Date.RTC_Date,
+								 get_weekday_name(g_RTC_Date.RTC_WeekDay),
 								 g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds,
 								 dhtdata.temp_int, dhtdata.temp_deci,
 								 dhtdata.humi_int, dhtdata.humi_deci);
@@ -224,11 +239,11 @@ int main(void)
 					OLED_Refresh();
 					OLED_Clear();
 					// 读取失败，显示日期时间和错误信息
-					OLED_Printf_Line(0, "%02d/%02d/%02d",
-
+					OLED_Printf_Line(0, "%02d/%02d/%02d %s",
 													 g_RTC_Date.RTC_Year + 2000,
 													 g_RTC_Date.RTC_Month,
-													 g_RTC_Date.RTC_Date);
+													 g_RTC_Date.RTC_Date,
+													 get_weekday_name(g_RTC_Date.RTC_WeekDay));
 					OLED_Printf_Line(1, "%02d:%02d:%02d",
 													 g_RTC_Time.RTC_Hours,
 													 g_RTC_Time.RTC_Minutes,
@@ -236,8 +251,9 @@ int main(void)
 					OLED_Printf_Line(2, "DHT11 Error!");
 					OLED_Printf_Line(3, "Code: %d", result);
 
-					printf("Mode 5 - Date: %04d-%02d-%02d %02d:%02d:%02d, DHT11 failed: %d\r\n",
+					printf("Mode 5 - Date: %04d-%02d-%02d(%s) %02d:%02d:%02d, DHT11 failed: %d\r\n",
 								 g_RTC_Date.RTC_Year + 2000, g_RTC_Date.RTC_Month, g_RTC_Date.RTC_Date,
+								 get_weekday_name(g_RTC_Date.RTC_WeekDay),
 								 g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds, result);
 				}
 
