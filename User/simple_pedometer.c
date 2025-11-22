@@ -1,6 +1,7 @@
 #include "simple_pedometer.h"
 #include "math.h"
 #include <stdlib.h>
+#include "ui/step.h"  // 包含步数存储函数
 
 // 全局步数变量
 unsigned long g_step_count = 0;
@@ -34,6 +35,9 @@ void simple_pedometer_init(void)
     pedometer.step_state = 0;             // 初始状态：等待波峰
     
     printf("Simple pedometer initialized with high sensitivity\r\n");
+    
+    // 加载保存的步数数据
+    Steps_Load();
 }
 
 /**
@@ -112,6 +116,11 @@ unsigned long simple_pedometer_update(short ax, short ay, short az)
                 g_step_count++;
                 pedometer.last_step_time = current_time;
                 printf("Step detected! Total steps: %lu\r\n", g_step_count);
+                
+                // 每100步或达到特定步数时保存一次
+                if (g_step_count % 100 == 0) {
+                    Steps_Save();
+                }
             }
             pedometer.step_state = 0; // 回到等待波峰状态
         }
@@ -142,4 +151,7 @@ void simple_pedometer_reset(void)
     pedometer.last_step_time = 0;
     pedometer.step_state = 0;
     printf("Simple pedometer reset\r\n");
+    
+    // 重置后立即保存
+    Steps_Save();
 }

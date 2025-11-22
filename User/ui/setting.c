@@ -371,7 +371,7 @@ void setting_Ref(u8 selected)
 
 void setting()
 {
-
+    delay_ms(10);
   u8 flag_RE=1;
   u8 key;
   u8 selected= 0;

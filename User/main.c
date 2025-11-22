@@ -97,6 +97,8 @@ void menu_Refresh(u8 selected)
 // ?????????????????????????��??��???
 u8 menu(u8 cho)
 {
+
+	delay_ms(10);
 	u8 flag_RE = 1;
 	u8 selected = cho;
 
@@ -159,20 +161,24 @@ u8 menu(u8 cho)
 int main()
 {
 
-	KEY_Init();
-	OLED_Init();
+	
 	debug_init();
 	printf("debug init OK:");
 	printf("------------------------------------------------------>>\r\n");
+KEY_Init();
+printf("key init OK\r\n");
+	OLED_Init();
+
+	OLED_ShowPicture(32, 0, 64, 64, gImage_bg, 1);
 	// 初始化RTC
 	RTC_Date_Init();
 
 	// 初始化闹钟系统
 	Alarms_Init();
 
-	OLED_ShowPicture(32, 0, 64, 64, gImage_bg, 1);
+	
 	OLED_Refresh(); // ????
-
+ printf("\r\n");
 	MPU_Init();
 
 	// ??MPU6050??ID
@@ -206,8 +212,8 @@ int main()
 	OLED_Clear();
 
 	// RTC_SetTime_Manual(23, 59, 57);
-	printf("system init OK!\r\n");
-	printf("<<--------------------------------------------\r\n");
+	printf("\r\n");
+	printf("<<----------------------------------------------system init OK!\r\n");
 	// ?????
 	while (1)
 	{

@@ -2,12 +2,18 @@
 #include "ui/alarm_all.h"
 #include <stdio.h>
 
+// 分页显示相关宏定义
+#define ALARM_SHOWING_NUM 4
+
 // 选项的图标
 const unsigned char *alarm_menu_options[] =
     {
         gImage_add,      // 新建闹钟图标
         gImage_list      // 闹钟列表图标
 };
+
+// 分页显示相关变量
+static u8 alarm_last_page = 0;
 
 void alarm_menu_Enter_select(u8 selected)
 {
@@ -288,13 +294,60 @@ void Process_Alarm_Detail(u8 alarm_index)
     }
 }
 
+/**
+ * @brief 安全的闹钟列表显示函数（参考testlist的分页逻辑）
+ */
+void alarm_list_Display(u8 selected)
+{
+    if (g_alarm_count == 0) {
+        return;
+    }
+    
+    u8 page = selected / ALARM_SHOWING_NUM;
+    if (alarm_last_page != page) {
+        OLED_Clear();
+        alarm_last_page = page;
+    }
+    
+    // 当前在第几页（从0开始）
+    u8 start_idx = page * ALARM_SHOWING_NUM;            // 本页第一个选项的索引
+    u8 items_this_page = g_alarm_count - start_idx;     // 本页实际有多少项
+    if (items_this_page > ALARM_SHOWING_NUM) {
+        items_this_page = ALARM_SHOWING_NUM;
+    }
+    
+    // 显示当前页的闹钟项目
+    for (u8 i = 0; i < items_this_page; i++) {
+        u8 current_idx = start_idx + i; // 实际在总列表中的索引
+        Alarm_TypeDef* alarm = &g_alarms[current_idx];
+        
+        // 判断是否是当前选中项
+        char arrow = (current_idx == selected) ? '>' : ' ';
+        
+        // 显示这一行（从第1行开始显示闹钟）
+        OLED_Printf_Line(i , "%c%02d:%02d:%02d %s %s",
+                        arrow,
+                        alarm->hour, alarm->minute, alarm->second,
+                        alarm->enabled ? "ON " : "OFF",
+                        alarm->repeat ? "R" : " ");
+    }
+    
+    // 如果本页不足ALARM_SHOWING_NUM行，下面几行清空
+    for (u8 i = items_this_page; i < ALARM_SHOWING_NUM; i++) {
+        OLED_Clear_Line(i + 1);
+    }
+   
+    OLED_Refresh_Dirty();
+}
+
 // 闹钟列表功能实现
 void alarm_list(void)
 {
+    delay_ms(10);
     u8 key;
-    u8 display_start = 0;
     u8 selected = 0;
-    u8 flag_cl=1;
+    u8 flag_RE = 1;
+    
     if (g_alarm_count == 0) {
         OLED_Clear();
         OLED_Printf_Line(1, " NO ALARMS ");
@@ -306,60 +359,45 @@ void alarm_list(void)
     }
     
     while (1) {
- if (flag_cl)
- {
-    OLED_Clear();
-    flag_cl=0;
- }
- 
         delay_ms(10);
+        
+        if (flag_RE) {
+            alarm_list_Display(selected);
+            flag_RE = 0;
+        }
+        
         if ((key = KEY_Get()) != 0) {
             switch (key) {
                 case KEY0_PRES:  // 上一个
-                    if (selected > 0) {
+                    if (selected == 0) {
+                        selected = g_alarm_count - 1; // 循环到最后一项
+                    } else {
                         selected--;
-                    } else if (display_start > 0) {
-                        display_start--;
                     }
+                    flag_RE = 1;
                     break;
                     
                 case KEY1_PRES:  // 下一个
-                    if (selected < g_alarm_count - 1) {
-                        if (selected < 3) {
-                            selected++;
-                        } else if (display_start + 4 < g_alarm_count) {
-                            display_start++;
-                        }
+                    selected++;
+                    if (selected >= g_alarm_count) {
+                        selected = 0; // 循环到第一项
                     }
+                    flag_RE = 1;
                     break;
                     
                 case KEY2_PRES:  // 返回
+                    alarm_last_page = 0; // 重置页面记录
                     OLED_Clear();
                     return;
                     
                 case KEY3_PRES:  // 进入当前选中闹钟的详情界面
-                    Process_Alarm_Detail(display_start + selected);
-                    flag_cl=1;
-                    // 重新显示列表
-                    selected = 0;
-                    display_start = 0;
+                    Process_Alarm_Detail(selected);
+                    OLED_Clear();
+                    flag_RE = 1;
+                    // 重新显示列表，保持原来的选中位置
                     break;
             }
         }
-        
-       
-        OLED_Printf_Line(0, "ALARMS LIST");
-        
-        // 显示最多4个闹钟
-        for (u8 i = 0; i < 4 && (display_start + i) < g_alarm_count; i++) {
-            Alarm_TypeDef* alarm = &g_alarms[display_start + i];
-            OLED_Printf_Line(i + 1, "%c%02d:%02d:%02d %s %s",
-                            (i == selected) ? '>' : ' ',
-                            alarm->hour, alarm->minute, alarm->second,
-                            alarm->enabled ? "ON " : "OFF",
-                            alarm->repeat ? "R" : " ");
-        }
-        OLED_Refresh();
     }
 }
 
@@ -367,8 +405,8 @@ void alarm_menu()
 {
     u8 flag_RE = 1;
     u8 key;
-    u8 selected = 0;
- 
+    u8 selected = 2;
+    delay_ms(10);
     while (1)
     {
         // 全局闹钟处理 - 在闹钟菜单界面也能处理闹钟
@@ -413,6 +451,7 @@ void alarm_menu()
                 
             case KEY3_PRES:
                 flag_RE = 1;
+                OLED_Clear();
                 alarm_menu_Enter_select(selected); // 进入所选择的菜单项
                 break;
 

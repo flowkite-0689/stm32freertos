@@ -68,31 +68,133 @@ uint32_t W25Q128_ReadID(void)
     uint8_t capacity_id = 0;
     uint32_t JedecDeviceID = 0;
 	
-	SPI_NSS_L;	// 片选
-	SPI1_ReadWriteByte(W25X_JedecDeviceID);
-	manufacturer_id = SPI1_ReadWriteByte(W25X_Dummy);
-	memory_type_id = SPI1_ReadWriteByte(W25X_Dummy);
-	capacity_id = SPI1_ReadWriteByte(W25X_Dummy);
-	JedecDeviceID = manufacturer_id << 16 | memory_type_id << 8 | capacity_id;
-	SPI_NSS_H;
-	return JedecDeviceID;
+    printf("Reading W25Q128 ID...\r\n");
+    SPI_NSS_L;	// 片选
+    SPI1_ReadWriteByte(W25X_JedecDeviceID);
+    manufacturer_id = SPI1_ReadWriteByte(W25X_Dummy);
+    memory_type_id = SPI1_ReadWriteByte(W25X_Dummy);
+    capacity_id = SPI1_ReadWriteByte(W25X_Dummy);
+    SPI_NSS_H;
+    JedecDeviceID = manufacturer_id << 16 | memory_type_id << 8 | capacity_id;
+    
+    printf("W25Q128 bytes: Mfg=0x%02X, Type=0x%02X, Cap=0x%02X\r\n", 
+           manufacturer_id, memory_type_id, capacity_id);
+    printf("W25Q128 ID: 0x%06X\r\n", JedecDeviceID);
+    
+    return JedecDeviceID;
 }
 
 // 等待不忙
 void W25Q128_WaitForWriteEnd(void)
 {
-	uint8_t status = 0;
-	SPI_NSS_L;	// 片选
-	SPI1_ReadWriteByte(W25X_ReadStatusReg1);
-	
-	do
-	{
-		status = SPI1_ReadWriteByte(W25X_Dummy);
-	}while (status & 1);
-	SPI_NSS_H;
+    SPI_NSS_L;
+    uint8_t Temp0 = 0;
+    SPI1_ReadWriteByte(W25X_ReadStatusReg1);
+    do
+    {
+        Temp0 = SPI1_ReadWriteByte(0xFF);
+    } while (Temp0 & 0x01); // 等待WIP(BUSY)标志位清零
+    SPI_NSS_H;
 }
-
 //
 // 等待不忙
 // 写
+void W25Q128_WriteEnable(void)
+{
+    SPI_NSS_L;
+    SPI1_ReadWriteByte(W25X_WriteEnable);
+    SPI_NSS_H;
+}
 
+void W25Q128_SectorErase(uint32_t SectorAddr)
+{
+    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    W25Q128_WriteEnable();
+    SPI_NSS_L;
+    SPI1_ReadWriteByte(W25X_SectorErase);
+    SPI1_ReadWriteByte((SectorAddr >> 16) & 0xFF);
+    SPI1_ReadWriteByte((SectorAddr >> 8) & 0xFF);
+    SPI1_ReadWriteByte(SectorAddr & 0xFF);
+    SPI_NSS_H;
+    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+}
+
+void W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+{
+    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    W25Q128_WriteEnable();
+    SPI_NSS_L;
+    SPI1_ReadWriteByte(W25X_PageProgram);
+    SPI1_ReadWriteByte((WriteAddr >> 16) & 0xFF);
+    SPI1_ReadWriteByte((WriteAddr >> 8) & 0xFF);
+    SPI1_ReadWriteByte(WriteAddr & 0xFF);
+    for (uint16_t i = 0; i < NumByteToWrite; i++)
+    {
+        SPI1_ReadWriteByte(pBuffer[i]);
+    }
+    SPI_NSS_H;
+    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+}
+
+// 任意地址写入，页满则下一页写入，到芯片最后地址则停止写入
+void W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+{
+    uint16_t bytes_remaining = NumByteToWrite;
+    uint16_t bytes_to_write;
+    uint32_t current_addr = WriteAddr;
+
+    if (pBuffer == NULL || NumByteToWrite == 0) // 空指针和零长度检查
+    {
+        return;
+    }
+
+    // 检查写入地址是否超出芯片容量
+    if (current_addr >= W25Q128_CAPACITY)
+    {
+        return; // 起始地址已超出芯片范围
+    }
+
+    while (bytes_remaining > 0)
+    {
+        // 计算当前页内剩余空间
+        uint16_t page_offset = current_addr % W25Q128_PAGE_SIZE;   // 页内偏移量
+        uint16_t page_remaining = W25Q128_PAGE_SIZE - page_offset; // 当前页剩余空间
+
+        // 确定本次写入的字节数
+        bytes_to_write = (bytes_remaining <= page_remaining) ? bytes_remaining : page_remaining;
+
+        // 执行页写入
+        W25Q128_WritePage(pBuffer, current_addr, bytes_to_write);
+
+        // 更新指针和计数器
+        pBuffer += bytes_to_write;
+        current_addr += bytes_to_write;
+        bytes_remaining -= bytes_to_write;
+
+        // 如果已经写到芯片末尾，退出循环
+        if (current_addr >= W25Q128_CAPACITY)
+        {
+            break;
+        }
+    }
+}
+void W25Q128_ReadData(uint8_t *pBuffer, uint32_t ReadAddr, uint16_t NumByteToRead)
+{
+    uint16_t bytes_to_read = 0;                                                                                 // 剩余待读取的字节数
+    bytes_to_read = NumByteToRead + ReadAddr >= W25Q128_CAPACITY ? W25Q128_CAPACITY - ReadAddr : NumByteToRead; // 读取字节数不能超过芯片容量
+    if (pBuffer == NULL || bytes_to_read == 0)                                                                  // 空指针和零长度检查
+    {
+        return;
+    }
+
+    SPI_NSS_L;
+    SPI1_ReadWriteByte(W25X_ReadData);
+    SPI1_ReadWriteByte((ReadAddr >> 16) & 0xFF);
+    SPI1_ReadWriteByte((ReadAddr >> 8) & 0xFF);
+    SPI1_ReadWriteByte(ReadAddr & 0xFF);
+    for (uint16_t i = 0; i < bytes_to_read; i++)
+    {
+        pBuffer[i] = SPI1_ReadWriteByte(0xFF);
+    }
+    SPI_NSS_H;
+}
