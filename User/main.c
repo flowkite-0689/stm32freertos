@@ -5,13 +5,14 @@
 #include "soft_i2c.h"
 #include "logo.h"
 #include "ui.h"
+#include "ui/alarm_all.h"
 #include "rtc_date.h" // ????RTC????
 #include "MPU6050.h"
 #include "MPU6050/eMPL/inv_mpu_dmp_motion_driver.h"
 #include "simple_pedometer.h"
 #include <stdlib.h> // ????abs????????
 // ????????
-#define options_NUM 6
+#define options_NUM 7
 
 /**
  * @brief ???????????
@@ -36,7 +37,8 @@ const unsigned char *options[] =
 				gImage_TandH,
 				gImage_flashlight,
 				gImage_bell,
-				gImage_step
+				gImage_step,
+				gImage_test
 
 };
 
@@ -99,6 +101,13 @@ u8 menu(u8 cho)
 	while (1)
 	{
 		delay_ms(10);
+
+		// 全局闹钟处理 - 在菜单界面也能处理闹钟
+		if (Alarm_GlobalHandler())
+		{
+			continue; // 如果正在处理闹钟提醒，跳过菜单循环的其他部分
+		}
+
 		if (flag_RE)
 		{
 			OLED_Clear();
@@ -150,6 +159,13 @@ int main()
 	KEY_Init();
 	OLED_Init();
 	debug_init();
+	printf("debug init OK:");
+	printf("------------------------------------------------------>>\r\n");
+	// 初始化RTC
+	RTC_Date_Init();
+
+	// 初始化闹钟系统
+	Alarms_Init();
 
 	OLED_ShowPicture(32, 0, 64, 64, gImage_bg, 1);
 	OLED_Refresh(); // ????
@@ -185,9 +201,42 @@ int main()
 	// ???????????
 	static unsigned long loop_counter = 0;
 	OLED_Clear();
+
+	// RTC_SetTime_Manual(23, 59, 57);
+	printf("system init OK!\r\n");
+	printf("<<--------------------------------------------\r\n");
 	// ?????
 	while (1)
 	{
+		// 全局闹钟处理 - 在任何界面都能处理闹钟
+		if (Alarm_GlobalHandler())
+		{
+			delay_ms(100); // 给闹钟显示留出时间
+			continue;			 // 如果正在处理闹钟提醒，跳过主循环的其他部分
+		}
+
+		// 备用闹钟检查 - 防止中断失效
+		Alarm_Check();
+		
+		// 获取当前时间用于自动测试
+		RTC_Date_Get(); // 确保获取最新的RTC时间
+		
+		// 只有真正到达00:00:00-00:00:30范围内才触发测试闹钟
+		if (g_RTC_Time.RTC_Hours == 0 && g_RTC_Time.RTC_Minutes == 0 && 
+		    g_RTC_Time.RTC_Seconds >= 0 && g_RTC_Time.RTC_Seconds <= 30 &&
+		    !alarm_alert_active) {
+			// 确保真的到了00:00:00之后才触发（避免RTC时间同步问题）
+			static uint8_t trigger_flag = 0;
+			if (g_RTC_Time.RTC_Seconds == 0 || trigger_flag) {
+				if (!trigger_flag) {
+					printf("Auto midnight alarm test triggered at %02d:%02d:%02d\r\n", 
+					       g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
+					trigger_flag = 1;
+					Alarm_ForceTrigger();
+				}
+			}
+		}
+
 		// ??RTC??
 		RTC_Date_Get();
 		OLED_Printf_Line(0, "%02d/%02d/%02d     %s",
@@ -244,20 +293,22 @@ int main()
 		OLED_Printf_Line(3, "step : %lu", count); // ????
 																							// ????
 		OLED_Refresh_Dirty();
-		delay_ms(50); // ???????????
+		delay_ms(150); // ???????????
 
-
-		if ()
-		{
-			/* code */
-		}
-		
 		if ((key = KEY_Get()) != 0)
 		{
 			switch (key)
 			{
 			case KEY3_PRES:
+				printf("cd menu\r\n");
 				cho = menu(cho);
+				printf("out menu\r\n");
+				break;
+
+			case KEY2_PRES:
+				// 强制触发闹钟测试 (用于调试)
+				printf("Manual alarm test triggered\r\n");
+				Alarm_ForceTrigger();
 				break;
 
 			default:

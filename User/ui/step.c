@@ -1,4 +1,5 @@
 #include "step.h"
+#include "ui/alarm_all.h"
 #include "oled.h"
 #include "oled_print.h"
 #include "MPU6050.h"
@@ -21,6 +22,11 @@ void step(void)
     
     while(1)
     {
+        // 全局闹钟处理 - 在计步器界面也能处理闹钟
+        if (Alarm_GlobalHandler()) {
+            continue; // 如果正在处理闹钟提醒，跳过计步器循环的其他部分
+        }
+        
         // 读取加速度数据
         short ax, ay, az;
         MPU_Get_Accelerometer(&ax, &ay, &az);

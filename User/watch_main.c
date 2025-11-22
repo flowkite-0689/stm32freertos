@@ -9,7 +9,8 @@
 #include "ui/flashlight.h"
 #include "ui/alarm_menu.h"
 #include "ui/step.h"
-#include "ui/alarm.h"
+#include "ui/alarm_all.h"
+#include "ui/alarm_alert.h"
 
 /**
  * @brief 电子手表主函数
@@ -183,6 +184,15 @@ void Handle_Keys(void)
     uint8_t key = KEY_Get();
     if(key == 0) return;
     
+    // 如果处于闹钟提醒状态，优先处理提醒界面按键
+    if (alarm_alert_active) {
+        if (Handle_Alarm_Alert_Keys()) {
+            alarm_alert_active = 0;  // 退出提醒状态
+            g_triggered_alarm_index = 0xFF;  // 清除触发的闹钟索引
+        }
+        return;
+    }
+    
     switch(current_mode) {
         case WATCH_MODE_TIME_DISPLAY:
         case WATCH_MODE_DATE_DISPLAY:
@@ -297,6 +307,15 @@ void Update_Display(void)
 {
     uint32_t current_time = get_systick();
     
+    // 如果处于闹钟提醒状态，更新提醒界面显示
+    if (alarm_alert_active) {
+        // 检查是否有有效的触发闹钟索引
+        if (g_triggered_alarm_index < g_alarm_count) {
+            Update_Alarm_Alert_Display(&g_alarms[g_triggered_alarm_index]);
+        }
+        return;
+    }
+    
     switch(current_mode) {
         case WATCH_MODE_TIME_DISPLAY:
             if(current_time - last_display_update >= DISPLAY_UPDATE_INTERVAL) {
@@ -329,51 +348,51 @@ void Update_Display(void)
     }
 }
 
-/**
-  * @brief  主函数
-  */
-int main(void)
-{ 
-    u8 key;
+// /**
+//   * @brief  主函数
+//   */
+// int main(void)
+// { 
+//     u8 key;
     
-    // 系统初始化
-    delay_init(168);        // 初始化延时函数
-    uart_dma_init(115200);  // 初始化串口DMA
-    OLED_Init();            // 初始化OLED
-    KEY_Init();             // 初始化按键
-    RTC_Date_Init();        // 初始化RTC
-    //BEEP_Init();          // 初始化蜂鸣器
+//     // 系统初始化
+//     delay_init(168);        // 初始化延时函数
+//     uart_dma_init(115200);  // 初始化串口DMA
+//     OLED_Init();            // 初始化OLED
+//     KEY_Init();             // 初始化按键
+//     RTC_Date_Init();        // 初始化RTC
+//     //BEEP_Init();          // 初始化蜂鸣器
     
-    // 初始化闹钟系统
-    Alarms_Init();
+//     // 初始化闹钟系统
+//     Alarms_Init();
     
-    printf("System Init OK!\r\n");
+//     printf("System Init OK!\r\n");
     
-    // 显示启动画面
-    Display_Startup_Screen();
+//     // 显示启动画面
+//     Display_Startup_Screen();
     
-    // 主循环
-    while(1)
-    {
-        delay_ms(10);
+//     // 主循环
+//     while(1)
+//     {
+//         delay_ms(10);
         
-        // 检查是否有闹钟触发
-        Alarm_Check();
+//         // 检查是否有闹钟触发
+//         Alarm_Check();
         
-        if((key = KEY_Get()) != 0)
-        {
-            Handle_Keys();
-        }
+//         if((key = KEY_Get()) != 0)
+//         {
+//             Handle_Keys();
+//         }
         
-        Update_Display();
+//         Update_Display();
         
-        // 模式切换时清屏
-        if(current_mode != last_mode) {
-            OLED_Clear();
-            last_mode = current_mode;
-        }
+//         // 模式切换时清屏
+//         if(current_mode != last_mode) {
+//             OLED_Clear();
+//             last_mode = current_mode;
+//         }
         
-        // 刷新OLED显示
-        OLED_Refresh_Dirty();
-    }
-}
+//         // 刷新OLED显示
+//         OLED_Refresh_Dirty();
+//     }
+// }

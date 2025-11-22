@@ -1,4 +1,5 @@
 #include "setting.h"
+#include "ui/alarm_all.h"
 
 // 设置步骤和临时变量
 static u8 set_time_step = 0;
@@ -149,6 +150,12 @@ void Process_Set_Time(void)
     Display_Set_Time();
     
     while (1) {
+        // 全局闹钟处理 - 在时间设置界面也能处理闹钟
+        if (Alarm_GlobalHandler()) {
+            delay_ms(10);
+            continue; // 如果正在处理闹钟提醒，跳过时间设置循环的其他部分
+        }
+        
         delay_ms(10);
         if ((key = KEY_Get())!=0) {
             printf("Key pressed: %d\n", key);  // 调试信息
@@ -224,6 +231,12 @@ void Process_Set_Date(void)
     Display_Set_Date();
     
     while (1) {
+        // 全局闹钟处理 - 在日期设置界面也能处理闹钟
+        if (Alarm_GlobalHandler()) {
+            delay_ms(10);
+            continue; // 如果正在处理闹钟提醒，跳过日期设置循环的其他部分
+        }
+        
         delay_ms(10);
         if ((key = KEY_Get())!=0) {
             printf("Key pressed: %d\n", key);  // 调试信息
@@ -365,6 +378,12 @@ void setting()
  
   while (1)
   {
+    // 全局闹钟处理 - 在设置界面也能处理闹钟
+    if (Alarm_GlobalHandler()) {
+        delay_ms(10);
+        continue; // 如果正在处理闹钟提醒，跳过设置循环的其他部分
+    }
+    
     delay_ms(10);
     if (flag_RE)
     {

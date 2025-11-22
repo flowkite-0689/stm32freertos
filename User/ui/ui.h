@@ -1,13 +1,13 @@
-#ifndef __UI_H
-#define __UI_H
+#ifndef _UI_H
+#define _UI_H
 
-#include "sys.h"
-#include "TandH.h"
-#include "stopwatch.h"
-#include "setting.h"
-#include "flashlight.h"
+// 包含所有UI头文件
+#include "alarm_all.h"
 #include "alarm_menu.h"
+#include "flashlight.h"
+#include "setting.h"
 #include "step.h"
-#include "alarm.h"
+#include "stopwatch.h"
+#include "TandH.h"
 
 #endif

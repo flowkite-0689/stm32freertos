@@ -1,5 +1,6 @@
 
 #include "TandH.h"
+#include "ui/alarm_all.h"
 
 
 void TandH()
@@ -15,7 +16,13 @@ debug_init();
  
   while (1)
   {
-delay_ms(10);
+    // 全局闹钟处理 - 在温湿度界面也能处理闹钟
+    if (Alarm_GlobalHandler()) {
+        delay_ms(10);
+        continue; // 如果正在处理闹钟提醒，跳过温湿度循环的其他部分
+    }
+    
+    delay_ms(10);
     if ((key =KEY_Get())!=0)
     {
       if (key == KEY2_PRES)

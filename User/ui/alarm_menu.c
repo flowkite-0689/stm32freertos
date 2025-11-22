@@ -1,4 +1,5 @@
 #include "alarm_menu.h"
+#include "ui/alarm_all.h"
 #include <stdio.h>
 
 // 选项的图标
@@ -48,28 +49,28 @@ void Display_Set_Alarm(void)
     switch(set_alarm_step) {
         case 0:  // 设置小时
             OLED_Clear_Line(1);
-            OLED_Printf_Line(1, "  [%02d]:%02d:%02d-loop:%s", temp_alarm.hour,
+            OLED_Printf_Line(1, " [%02d]:%02d:%02d-loop:%s", temp_alarm.hour,
                  temp_alarm.minute, temp_alarm.second,temp_alarm.repeat ? "YES" : "NO ");
             OLED_Clear_Line(2);
-            OLED_Printf_Line(2, "    Set Hours");
+            OLED_Printf_Line(2, "   Set Hours");
             break;
         case 1:  // 设置分钟
             OLED_Clear_Line(1);
-            OLED_Printf_Line(1, "   %02d:[%02d]:%02d-loop:%s", temp_alarm.hour, temp_alarm.minute, 
+            OLED_Printf_Line(1, " %02d:[%02d]:%02d-loop:%s", temp_alarm.hour, temp_alarm.minute, 
                 temp_alarm.second,temp_alarm.repeat ? "YES" : "NO ");
             OLED_Clear_Line(2);
-            OLED_Printf_Line(2, "   Set Minutes");
+            OLED_Printf_Line(2, "  Set Minutes");
             break;
         case 2:  // 设置秒
             OLED_Clear_Line(1);
-            OLED_Printf_Line(1, "   %02d:%02d:[%02d]-loop:%s", temp_alarm.hour, temp_alarm.minute, 
+            OLED_Printf_Line(1, " %02d:%02d:[%02d]-loop:%s", temp_alarm.hour, temp_alarm.minute, 
                 temp_alarm.second,temp_alarm.repeat ? "YES" : "NO ");
             OLED_Clear_Line(2);
             OLED_Printf_Line(2, "   Set Seconds");
             break;
         case 3:  // 设置重复
             OLED_Clear_Line(1);
-            OLED_Printf_Line(1, "   %02d:%02d:%02d-loop:[%s]", temp_alarm.hour, 
+            OLED_Printf_Line(1, " %02d:%02d:%02d-loop:[%s]", temp_alarm.hour, 
                 temp_alarm.minute, temp_alarm.second,temp_alarm.repeat ? "YES" : "NO ");
             OLED_Clear_Line(2);
             OLED_Printf_Line(2, "   Set Repeat");
@@ -369,7 +370,14 @@ void alarm_menu()
     u8 selected = 0;
  
     while (1)
-    {delay_ms(10);
+    {
+        // 全局闹钟处理 - 在闹钟菜单界面也能处理闹钟
+        if (Alarm_GlobalHandler()) {
+            delay_ms(10);
+            continue; // 如果正在处理闹钟提醒，跳过闹钟菜单循环的其他部分
+        }
+        
+        delay_ms(10);
         if (flag_RE)
         {
             OLED_Clear();

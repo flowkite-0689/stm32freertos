@@ -1,4 +1,5 @@
 #include "stopwatch.h"
+#include "ui/alarm_all.h"
 #include <stdio.h>
 
 /**
@@ -14,6 +15,11 @@ void stopwatch(void)
     Display_Stopwatch(&stopwatch_state);
     
     while (1) {
+        // 全局闹钟处理 - 在秒表界面也能处理闹钟
+        if (Alarm_GlobalHandler()) {
+            continue; // 如果正在处理闹钟提醒，跳过秒表循环的其他部分
+        }
+        
         if (key = KEY_Get()) {
             printf("Key pressed: %d\n", key);  // 调试信息
             switch (key) {

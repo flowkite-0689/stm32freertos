@@ -5,7 +5,7 @@
 #include "oled_print.h"
 #include "key.h"
 #include "logo.h"
-#include "alarm.h"
+#include "alarm_all.h"
 
 #define alarm_menu_options_NUM 2
 

@@ -1,4 +1,5 @@
 #include "flashlight.h"
+#include "ui/alarm_all.h"
 
 
 void flashlight()
@@ -15,6 +16,12 @@ void flashlight()
   u8 key ;
   while (1)
   {
+    // 全局闹钟处理 - 在手电筒界面也能处理闹钟
+    if (Alarm_GlobalHandler()) {
+        delay_ms(10);
+        continue; // 如果正在处理闹钟提醒，跳过循环的其他部分
+    }
+    
     delay_ms(10);
     if ((key =KEY_Get())!=0)
     {
