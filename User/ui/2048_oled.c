@@ -4,7 +4,7 @@
 
 int board[SIZE][SIZE];
 int score = 0;
-
+int flagisgameover=0;
 // 新增数字的逻辑
 void addNum()
 {
@@ -277,6 +277,54 @@ int isGameover()
 }
 
 // 靠mpu6050的体感来操控方向的方法
+int getmove()
+{
+    short ax, ay, az;
+    static int last_direction = -1;
+    int current_direction = -1;
+    int threshold = 3000; // 加速度阈值，可根据实际情况调整
+    
+    // 获取加速度数据
+    if (MPU_Get_Accelerometer(&ax, &ay, &az) == 0)
+    {
+        // 根据加速度判断倾斜方向
+        // 注意：这里的阈值可能需要根据实际情况调整
+        if (abs(ax) < 1000 && abs(ay) < 1000) {
+            // 接近水平，不移动
+            return -1;
+        }
+        
+        // 判断主要倾斜方向
+        if (abs(ax) > abs(ay)) {
+            // X轴方向占主导
+            if (ax > threshold) {
+                current_direction = 1; // 右
+            } else if (ax < -threshold) {
+                current_direction = 0; // 左
+            }
+        } else {
+            // Y轴方向占主导
+            if (ay > threshold) {
+                current_direction = 2; // 下
+            } else if (ay < -threshold) {
+                current_direction = 3; // 上
+            }
+        }
+        
+        // 只有在方向发生改变时才返回新的方向，避免连续移动
+        if (current_direction != last_direction && current_direction != -1) {
+            last_direction = current_direction;
+            return current_direction;
+        }
+        
+        // 如果回到水平状态，重置last_direction
+        if (abs(ax) < 1000 && abs(ay) < 1000) {
+            last_direction = -1;
+        }
+    }
+    
+    return -1; // 无有效移动
+}
 
 
 //游戏运行界面
@@ -286,21 +334,61 @@ void printBoard()
 {
   for (int i = 0; i < SIZE; i++)
   {
+    char c[SIZE];
+    for (int  j = 0; j < SIZE; j++)
+    {
+      int  number = board[i][j];
+      if (number<10)
+      {
+        c[j]=number+'0';
+      }else if (number == 16  )
+      {
+        c[j] = 'A';
+      }else if (number == 32 )
+      {
+        c[j] = 'B';
+      }else if (number == 64)
+      {
+        c[j] = 'C';
+      }else if (number == 128)
+      {
+        c[j] = 'D';
+      }else if (number == 256)
+      {
+        c[j] = 'E';
+      }else if (number == 512)
+      {
+        c[j] = 'F';
+      }else if (number == 1024)
+      {
+        c[j] = 'G';
+      }else if (number == 2048)
+      {
+        c[j] = 'H';
+      }
+      
+      
+      
+      
+      
+    }
+    
     if (i==0)
     {
-        OLED_Printf_Line(i,"%c  %c  %c  %cscore:%d",
-      board[i][0]?(board[i][0]+'0'):'.',
-    board[i][1]?(board[i][1]+'0'):'.',
-  board[i][2]?(board[i][2]+'0'):'.',
-board[i][3]?(board[i][3]+'0'):'.',score);
+        OLED_Printf_Line(i,"%c  %c  %c  %c score:%d",
+      board[i][0]?c[0]:'.',
+    board[i][1]?c[1]:'.',
+  board[i][2]?c[2]:'.',
+board[i][3]?c[3]:'.',score);
     }
     else
     {
-    OLED_Printf_Line(i,"%c  %c  %c  %c",
-      board[i][0]?(board[i][0]+'0'):'.',
-    board[i][1]?(board[i][1]+'0'):'.',
-  board[i][2]?(board[i][2]+'0'):'.',
-board[i][3]?(board[i][3]+'0'):'.');
+    OLED_Printf_Line(i,"%c  %c  %c  %c %s",
+     board[i][0]?c[0]:'.',
+    board[i][1]?c[1]:'.',
+  board[i][2]?c[2]:'.',
+board[i][3]?c[3]:'.',
+flagisgameover?" OVER":" ");
   }}
   OLED_Refresh_Dirty();
 }
@@ -313,16 +401,38 @@ void game_running_2048()
 {
  init();
  u8 key ;
+ 
+ // 确保MPU6050已初始化
+ static u8 mpu_initialized = 0;
+ if (!mpu_initialized) {
+     MPU_Init();
+     mpu_initialized = 1;
+ }
+ 
  while (1)
  {
+  if (isGameover())
+  {
+    flagisgameover=1;
+  }
   
   printBoard();
-  key =KEY_Get();
+
+  int fx = getmove(); // 获得移动方向
+
+  if (fx != -1 && move(fx)) // 只有当有有效移动方向且实际移动时才添加新数字
+  {
+    addNum();
+    delay_ms(300); // 添加延迟防止过于灵敏的响应
+  }
+  
+  key = KEY_Get();
   if (key)
   {
     switch (key)
     {
     case KEY2_PRES:
+    OLED_Clear();
       return;
     
     default:
@@ -331,7 +441,6 @@ void game_running_2048()
   }
   
  }
- 
 }
 
 
