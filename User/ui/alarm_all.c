@@ -197,13 +197,13 @@ void Alarm_Check(void)
     RTC_GetTime(RTC_Format_BIN, &currentTime);
     
     // 调试：每秒输出一次时间
-    if (currentTime.RTC_Seconds != last_second) {
-        printf("Time: %02d:%02d:%02d\r\n", 
-               currentTime.RTC_Hours, 
-               currentTime.RTC_Minutes, 
-               currentTime.RTC_Seconds);
-        last_second = currentTime.RTC_Seconds;
-    }
+    // if (currentTime.RTC_Seconds != last_second) {
+    //     printf("Time: %02d:%02d:%02d\r\n", 
+    //            currentTime.RTC_Hours, 
+    //            currentTime.RTC_Minutes, 
+    //            currentTime.RTC_Seconds);
+    //     last_second = currentTime.RTC_Seconds;
+    // }
     
     // 检查每个闹钟
     for (uint8_t i = 0; i < g_alarm_count; i++) {

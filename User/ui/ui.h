@@ -9,5 +9,6 @@
 #include "step.h"
 #include "stopwatch.h"
 #include "TandH.h"
+#include "testlist.h"
 
 #endif

@@ -76,10 +76,10 @@ void RTC_Date_Get(void)
     RTC_GetDate(RTC_Format_BIN, &g_RTC_Date);
 
     // 3）输出时间
-    printf("Time: %02d:%02d:%02d\n", g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
+    // printf("Time: %02d:%02d:%02d\n", g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
 
     // 4）输出日期
-    printf("Date: %04d-%02d-%02d\n", g_RTC_Date.RTC_Year + 2000, g_RTC_Date.RTC_Month, g_RTC_Date.RTC_Date);
+    // printf("Date: %04d-%02d-%02d\n", g_RTC_Date.RTC_Year + 2000, g_RTC_Date.RTC_Month, g_RTC_Date.RTC_Date);
 }
 
 // 手动设置RTC时间

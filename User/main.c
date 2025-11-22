@@ -66,6 +66,9 @@ u8 enter_select(u8 selected)
 	case 5:
 		step(); // ????????
 		break;
+		case 6:
+		testlist();
+		break;
 	default:
 		break;
 	}
@@ -266,7 +269,7 @@ int main()
 		// ??????
 		if (count != last_count)
 		{
-			printf("!!! STEP DETECTED: %ld -> %ld !!!\r\n", last_count, count);
+			// printf("!!! STEP DETECTED: %ld -> %ld !!!\r\n", last_count, count);
 			last_count = count;
 		}
 
@@ -279,16 +282,16 @@ int main()
 
 		if (accel_diff > 5000) // ????????
 		{
-			printf("Movement: diff=%ld\r\n", accel_diff);
+			// printf("Movement: diff=%ld\r\n", accel_diff);
 		}
 
 		// ????????
-		if (loop_counter % 10 == 0)
-		{
-			printf("Step: %ld\r\n", count);
-		}
+		// if (loop_counter % 10 == 0)
+		// {
+		// 	printf("Step: %ld\r\n", count);
+		// }
 
-		printf("Current step: %ld\r\n", count);
+		// printf("Current step: %ld\r\n", count);
 
 		OLED_Printf_Line(3, "step : %lu", count); // ????
 																							// ????
