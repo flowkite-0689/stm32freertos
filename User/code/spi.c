@@ -85,20 +85,29 @@ uint32_t W25Q128_ReadID(void)
 }
 
 // 等待不忙
-void W25Q128_WaitForWriteEnd(void)
+uint8_t W25Q128_WaitForWriteEnd(void)
 {
     SPI_NSS_L;
     uint8_t Temp0 = 0;
+    uint32_t timeout = W25Q128_TIMEOUT_VALUE;
+    
     SPI1_ReadWriteByte(W25X_ReadStatusReg1);
     do
     {
         Temp0 = SPI1_ReadWriteByte(0xFF);
-    } while (Temp0 & 0x01); // 等待WIP(BUSY)标志位清零
+        timeout--;
+    } while ((Temp0 & 0x01) && timeout); // 等待WIP(BUSY)标志位清零
+    
     SPI_NSS_H;
+    
+    if (timeout == 0) {
+        return W25Q128_TIMEOUT_ERROR;
+    }
+    
+    return W25Q128_RESULT_OK;
 }
-//
-// 等待不忙
-// 写
+
+// 写使能
 void W25Q128_WriteEnable(void)
 {
     SPI_NSS_L;
@@ -106,9 +115,16 @@ void W25Q128_WriteEnable(void)
     SPI_NSS_H;
 }
 
-void W25Q128_SectorErase(uint32_t SectorAddr)
+// 扇区擦除
+uint8_t W25Q128_SectorErase(uint32_t SectorAddr)
 {
-    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    uint8_t result;
+    
+    result = W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    if (result != W25Q128_RESULT_OK) {
+        return result;
+    }
+    
     W25Q128_WriteEnable();
     SPI_NSS_L;
     SPI1_ReadWriteByte(W25X_SectorErase);
@@ -116,42 +132,59 @@ void W25Q128_SectorErase(uint32_t SectorAddr)
     SPI1_ReadWriteByte((SectorAddr >> 8) & 0xFF);
     SPI1_ReadWriteByte(SectorAddr & 0xFF);
     SPI_NSS_H;
-    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    
+    result = W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    return result;
 }
 
-void W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+// 页写入
+uint8_t W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
 {
-    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    uint8_t result;
+    uint16_t i;
+    
+    if (pBuffer == NULL || NumByteToWrite == 0 || NumByteToWrite > W25Q128_PAGE_SIZE) {
+        return W25Q128_RESULT_ERROR;
+    }
+    
+    result = W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    if (result != W25Q128_RESULT_OK) {
+        return result;
+    }
+    
     W25Q128_WriteEnable();
     SPI_NSS_L;
     SPI1_ReadWriteByte(W25X_PageProgram);
     SPI1_ReadWriteByte((WriteAddr >> 16) & 0xFF);
     SPI1_ReadWriteByte((WriteAddr >> 8) & 0xFF);
     SPI1_ReadWriteByte(WriteAddr & 0xFF);
-    for (uint16_t i = 0; i < NumByteToWrite; i++)
+    for (i = 0; i < NumByteToWrite; i++)
     {
         SPI1_ReadWriteByte(pBuffer[i]);
     }
     SPI_NSS_H;
-    W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    
+    result = W25Q128_WaitForWriteEnd(); // 等待写操作完成
+    return result;
 }
 
 // 任意地址写入，页满则下一页写入，到芯片最后地址则停止写入
-void W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+uint8_t W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
 {
     uint16_t bytes_remaining = NumByteToWrite;
     uint16_t bytes_to_write;
     uint32_t current_addr = WriteAddr;
+    uint8_t result;
 
     if (pBuffer == NULL || NumByteToWrite == 0) // 空指针和零长度检查
     {
-        return;
+        return W25Q128_RESULT_ERROR;
     }
 
     // 检查写入地址是否超出芯片容量
     if (current_addr >= W25Q128_CAPACITY)
     {
-        return; // 起始地址已超出芯片范围
+        return W25Q128_RESULT_ERROR; // 起始地址已超出芯片范围
     }
 
     while (bytes_remaining > 0)
@@ -164,7 +197,10 @@ void W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteT
         bytes_to_write = (bytes_remaining <= page_remaining) ? bytes_remaining : page_remaining;
 
         // 执行页写入
-        W25Q128_WritePage(pBuffer, current_addr, bytes_to_write);
+        result = W25Q128_WritePage(pBuffer, current_addr, bytes_to_write);
+        if (result != W25Q128_RESULT_OK) {
+            return result;
+        }
 
         // 更新指针和计数器
         pBuffer += bytes_to_write;
@@ -177,7 +213,11 @@ void W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteT
             break;
         }
     }
+    
+    return W25Q128_RESULT_OK;
 }
+
+// 读取数据
 void W25Q128_ReadData(uint8_t *pBuffer, uint32_t ReadAddr, uint16_t NumByteToRead)
 {
     uint16_t bytes_to_read = 0;                                                                                 // 剩余待读取的字节数

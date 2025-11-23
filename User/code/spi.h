@@ -8,38 +8,46 @@
 #define SPI_NSS_L 	PBout(14) = 0
 #define W25X_Dummy  0xFF
 
-// W25Q128 ³£Á¿¶¨Òå
+// W25Q128 å‚æ•°å®šä¹‰
 #define W25Q128_CAPACITY     0x1000000   // 16MB = 128Mbit
-#define W25Q128_PAGE_SIZE    256         // Ò³´óĞ¡256×Ö½Ú
-#define W25Q128_SECTOR_SIZE  4096        // ÉÈÇø´óĞ¡4KB
+#define W25Q128_PAGE_SIZE    256         // é¡µå¤§å°256å­—èŠ‚
+#define W25Q128_SECTOR_SIZE  4096        // æ‰‡åŒºå¤§å°4KB
 
-// W25Q128 Ö¸Áî¶¨Òå
-#define W25X_WriteEnable     0x06        // Ğ´Ê¹ÄÜ
-#define W25X_WriteDisable    0x04        // Ğ´½ûÖ¹
-#define W25X_ReadStatusReg1  0x05        // ¶Á×´Ì¬¼Ä´æÆ÷1
-#define W25X_WriteStatusReg1 0x01        // Ğ´×´Ì¬¼Ä´æÆ÷1
-#define W25X_ReadData        0x03        // ¶ÁÊı¾İ
-#define W25X_FastRead        0x0B        // ¿ìËÙ¶Á
-#define W25X_PageProgram     0x02        // Ò³±à³Ì
-#define W25X_SectorErase     0x20        // ÉÈÇø²Á³ı
-#define W25X_BlockErase32    0x52        // 32KB¿é²Á³ı
-#define W25X_BlockErase64    0xD8        // 64KB¿é²Á³ı
-#define W25X_ChipErase       0xC7        // Ğ¾Æ¬²Á³ı
-#define W25X_JedecDeviceID   0x9F        // ¶ÁIDµÄÖ¸Áî
-#define W25X_JEDECID         0xEF4018    // Ğ¾Æ¬ID
+// W25Q128 æŒ‡ä»¤å®šä¹‰
+#define W25X_WriteEnable     0x06        // å†™ä½¿èƒ½
+#define W25X_WriteDisable    0x04        // å†™ç¦æ­¢
+#define W25X_ReadStatusReg1  0x05        // è¯»çŠ¶æ€å¯„å­˜å™¨1
+#define W25X_WriteStatusReg1 0x01        // å†™çŠ¶æ€å¯„å­˜å™¨1
+#define W25X_ReadData        0x03        // è¯»æ•°æ®
+#define W25X_FastRead        0x0B        // å¿«é€Ÿè¯»
+#define W25X_PageProgram     0x02        // é¡µç¼–ç¨‹
+#define W25X_SectorErase     0x20        // æ‰‡åŒºæ“¦é™¤
+#define W25X_BlockErase32    0x52        // 32KBå—æ“¦é™¤
+#define W25X_BlockErase64    0xD8        // 64KBå—æ“¦é™¤
+#define W25X_ChipErase       0xC7        // èŠ¯ç‰‡æ“¦é™¤
+#define W25X_JedecDeviceID   0x9F        // è¯»IDæŒ‡ä»¤
+#define W25X_JEDECID         0xEF4018    // èŠ¯ç‰‡ID
+#define W25X_PowerDown       0xB9        // è¿›å…¥ä½åŠŸè€—æ¨¡å¼
+#define W25X_ReleasePowerDown 0xAB       // é€€å‡ºä½åŠŸè€—æ¨¡å¼
+#define W25X_ReadStatusReg2  0x35        // è¯»å–çŠ¶æ€å¯„å­˜å™¨2
+#define W25X_WriteStatusReg2 0x31        // å†™å…¥çŠ¶æ€å¯„å­˜å™¨2
 
+// é”™è¯¯ä»£ç å®šä¹‰
+#define W25Q128_RESULT_OK       0
+#define W25Q128_RESULT_ERROR    1
+#define W25Q128_TIMEOUT_ERROR   2
 
-
+// è¶…æ—¶å®šä¹‰
+#define W25Q128_TIMEOUT_VALUE   1000000
 
 void SPI1_Init(void);
 uint8_t SPI1_ReadWriteByte(uint8_t txData);
 uint32_t W25Q128_ReadID(void);
-void W25Q128_WaitForWriteEnd(void);
+uint8_t W25Q128_WaitForWriteEnd(void);
 void W25Q128_WriteEnable(void);
-void W25Q128_SectorErase(uint32_t SectorAddr);
-void W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
-void W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
+uint8_t W25Q128_SectorErase(uint32_t SectorAddr);
+uint8_t W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
+uint8_t W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
 void W25Q128_ReadData(uint8_t *pBuffer, uint32_t ReadAddr, uint16_t NumByteToRead);
 
 #endif
-
