@@ -1,3 +1,18 @@
+/**
+ * @file 2048_oled.c
+ * @brief 2048游戏实现文件 - 支持OLED显示和MPU6050体感控制
+ * @author flowkite-0689
+ * @email 2604338097@qq.com
+ * @version 1.0
+ * @date 2025
+ * 
+ * 本文件实现了2048游戏的完整逻辑，包括：
+ * - 游戏核心玩法：数字移动、合并、得分
+ * - OLED显示：适配128x64屏幕的界面布局
+ * - MPU6050体感控制：通过倾斜角度控制游戏方向
+ * - 用户界面：菜单系统和游戏状态显示
+ */
+
 /*
  * OLED屏幕布局分析 (128x64像素)
  * 
@@ -42,7 +57,7 @@
  *     倾斜趋势: "right~", "left~", "up~", "down~" (未达到25度，但>5度)
  *     水平状态: "flat" (所有角度<5度)
  * - 第2行右侧: 角度显示 (x:96-127, y:32-47)
- *   格式: "30°", "15°" 等
+ *   格式: "30^", "15.5^" 等 (使用'^'替代'°'符号，因为12号字体中没有度数符号)
  * - 第3行: 完整用于棋盘显示，无右侧信息区
  * 
  * 布局方案:
@@ -60,22 +75,38 @@
 
 #define SIZE 4
 
+/**
+ * @brief 游戏棋盘数组
+ * @details 4x4的二维数组，存储游戏棋盘上的数字
+ */
 int board[SIZE][SIZE];
 
-/*用来存储信息，
-info[0]:方向
-info[1]:角度
-info[2]:结束
-
-*/
-
+/**
+ * @brief 游戏信息存储数组
+ * @details 存储游戏相关信息
+ * info[0]: 方向信息 (left, right, up, down等)
+ * info[1]: 角度信息 (倾斜角度显示)
+ * info[2]: 游戏状态信息 (游戏结束等)
+ */
 char *info[3] = {NULL, NULL, NULL};  // 初始化为NULL指针
 
+/**
+ * @brief 游戏得分
+ * @details 记录玩家当前的总得分
+ */
 int score = 0;
+
+/**
+ * @brief 游戏结束标志
+ * @details 0表示游戏进行中，1表示游戏结束
+ */
 int flagisgameover = 0;
 
 
-// 在程序开始处添加初始化函数
+/**
+ * @brief 初始化游戏信息数组
+ * @details 为info数组的每个元素分配内存并初始化为空字符串
+ */
 void init_info() {
     for(int i = 0; i < 3; i++) {
         if(info[i] != NULL) {
@@ -86,7 +117,10 @@ void init_info() {
     }
 }
 
-// 在程序结束处添加清理函数
+/**
+ * @brief 清理游戏信息数组
+ * @details 释放info数组分配的内存，避免内存泄漏
+ */
 void cleanup_info() {
     for(int i = 0; i < 3; i++) {
         if(info[i] != NULL) {
@@ -96,7 +130,11 @@ void cleanup_info() {
     }
 }
 
-// 新增数字的逻辑
+/**
+ * @brief 在棋盘的随机空位上添加新数字
+ * @details 遍历棋盘找到所有空位置，随机选择一个位置添加2或4
+ *          90%概率添加2，10%概率添加4
+ */
 void addNum()
 {
   int empty[SIZE * SIZE][2];
@@ -121,7 +159,10 @@ void addNum()
   }
 }
 
-// 初始化逻辑
+/**
+ * @brief 初始化游戏棋盘
+ * @details 清空棋盘并在随机位置添加两个初始数字
+ */
 void init()
 {
 
@@ -136,7 +177,12 @@ void init()
   addNum();
 }
 
-// 数字移动逻辑
+/**
+ * @brief 游戏数字移动和合并逻辑
+ * @param direction 移动方向：0-左，1-右，2-上，3-下
+ * @return int 返回是否发生移动：1表示有移动，0表示无移动
+ * @details 实现数字的移动和合并，计算得分，防止同一数字重复合并
+ */
 int move(int direction)
 {
   /*
@@ -316,7 +362,11 @@ int move(int direction)
   return moved;
 }
 
-// 游戏结束的逻辑
+/**
+ * @brief 检查游戏是否结束
+ * @return int 返回游戏状态：1表示游戏结束，0表示游戏继续
+ * @details 检查是否达到2048获胜条件，或者棋盘满且无法继续移动
+ */
 int isGameover()
 {
 
@@ -367,7 +417,15 @@ int isGameover()
   return 1;
 }
 
-// 将加速度转换为角度
+/**
+ * @brief 将MPU6050加速度数据转换为倾斜角度
+ * @param ax X轴加速度数据
+ * @param ay Y轴加速度数据
+ * @param az Z轴加速度数据
+ * @param angle_x 计算出的绕Y轴旋转角度(pitch，前后倾斜)
+ * @param angle_y 计算出的绕X轴旋转角度(roll，左右倾斜)
+ * @details 使用三角函数将三维加速度数据转换为二维倾斜角度
+ */
 void calculate_tilt_angles(short ax, short ay, short az, float *angle_x, float *angle_y)
 {
   // 计算倾斜角度
@@ -383,7 +441,11 @@ void calculate_tilt_angles(short ax, short ay, short az, float *angle_x, float *
   *angle_y = atan2(ay_d, sqrt(ax_d * ax_d + az_d * az_d)) * 180.0 / 3.14159265;
 }
 
-// 靠mpu6050的体感来操控方向的方法(基于角度)
+/**
+ * @brief 基于MPU6050体感获取游戏移动方向
+ * @return int 返回移动方向：0-左，1-右，2-上，3-下，-1表示无有效移动
+ * @details 通过检测设备倾斜角度来确定游戏移动方向，支持方向趋势显示
+ */
 int 
 getmove()
 {
@@ -472,7 +534,7 @@ getmove()
         }
         
         if(info[1] != NULL) {
-            snprintf(info[1], 16, " %.1f°     ", display_angle);
+            snprintf(info[1], 16, " %.1f^     ", display_angle);  // 用'^'替代'°'符号
         }
         
         // 检查是否需要重置
@@ -502,7 +564,11 @@ getmove()
 
 // 游戏运行界面
 
-// 打印棋盘
+/**
+ * @brief 在OLED屏幕上显示游戏棋盘
+ * @details 将数字转换为对应字符显示在OLED屏幕上，同时显示分数、方向、角度等信息
+ *          数字对应关系：2-9→数字字符，16→'A', 32→'B', 64→'C'等
+ */
 void printBoard()
 {
     // 安全地设置游戏结束状态
@@ -587,6 +653,10 @@ void printBoard()
     OLED_Refresh_Dirty();
 }
 
+/**
+ * @brief 游戏主运行函数
+ * @details 实现游戏主循环，处理游戏逻辑、按键输入和体感控制
+ */
 void game_running_2048()
 {
     init();
@@ -632,13 +702,20 @@ void game_running_2048()
     }
 }
 
-// 游戏菜单界面
-// 选项
+/**
+ * @brief 游戏菜单选项数组
+ * @details 定义游戏主菜单的选项
+ */
 char *menu_2048_opt[] = {
     "start"};
 u8 last_page_2048 = 99;
 #define SHOWING_NUM 4
 #define m_TOTAL_ITEMS (sizeof(menu_2048_opt) / sizeof(menu_2048_opt[0]))
+/**
+ * @brief 2048游戏菜单渲染函数
+ * @param selected 当前选中的菜单项索引
+ * @details 根据选中状态渲染菜单界面，支持分页显示
+ */
 void menu_2048_oled_RE(u8 selected)
 {
   u8 page = selected / SHOWING_NUM;
@@ -672,7 +749,11 @@ void menu_2048_oled_RE(u8 selected)
 
   OLED_Refresh_Dirty();
 }
-// 进入到所选
+/**
+ * @brief 处理菜单选项选择
+ * @param selected 选中的菜单项索引
+ * @details 根据用户选择进入相应的游戏功能
+ */
 void menu_2048_enter_select(u8 selected)
 {
   switch (selected)
@@ -686,7 +767,10 @@ void menu_2048_enter_select(u8 selected)
   }
 }
 
-// 游戏菜单主函数
+/**
+ * @brief 2048游戏菜单主函数
+ * @details 显示游戏主菜单，处理按键输入，控制菜单导航
+ */
 void menu_2048_oled()
 {
   u8 flag_Re = 1;
