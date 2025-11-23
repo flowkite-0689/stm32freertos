@@ -1,10 +1,101 @@
+/*
+ * OLED屏幕布局分析 (128x64像素)
+ * 
+ * 显示参数（来自oled_print.h）:
+ * - OLED_LINE_HEIGHT = 16像素/行
+ * - OLED_MAX_LINES = 4行 (16*4=64像素)
+ * - OLED_MAX_CHARS = 16字符/行 (8像素宽字符，16*8=128像素)
+ * - 字体大小: 12像素宽x16像素高 (使用OLED_ShowString的12号字体)
+ * 
+ * 游戏界面布局:
+ * ┌─────────────────────────────────────────┬─────────────────┐
+ * │ 第0行 (y:0-15):  棋盘第1行              │ 分数显示        │
+ * │         ".  .  .  ."                    │ score:100       │
+ * ├─────────────────────────────────────────┼─────────────────┤
+ * │ 第1行 (y:16-31): 棋盘第2行 ".  .  .  ." │ 方向显示        │
+ * │                                         │ right           │
+ * ├─────────────────────────────────────────┼─────────────────┤
+ * │ 第2行 (y:32-47): 棋盘第3行 ".  .  .  ." │ 角度显示        │
+ * │                                         │ 30°             │
+ * ├─────────────────────────────────────────┴─────────────────┤
+ * │ 第3行 (y:48-63): 棋盘第4行 + 游戏状态                     │
+ * └─────────────────────────────────────────────────────────┘
+ * 
+ * 棋盘布局详细分析:
+ * - 每个格子字符: 1字符(12像素) + 2空格(24像素) = 36像素
+ * - 4个格子: 36*4 = 144像素 > 128像素 (会超出屏幕)
+ * - 实际布局: 每个格子简化为1字符+1空格 = 24像素
+ * - 4个格子: 24*4 = 96像素 (x坐标0-95)
+ * - 右侧信息区: 128-96 = 32像素 (x坐标96-127)
+ *   格式: "C "  (C=棋盘字符, 后跟1空格)
+ * 
+ * 第0行内容分析:
+ * - 棋盘部分: ". . . " (4x2=8字符 = 96像素，使用12像素字体)
+ * - 分数部分: 显示在右侧32像素区域
+ * 
+ * 右侧信息显示:
+ * - 第0行右侧: 分数显示 (x:96-127, y:0-15)
+ *   格式: "sc:分" (简洁格式)
+ * - 第1行右侧: 方向显示 (x:96-127, y:16-31)  
+ *   格式: 
+ *     触发状态: "right", "left", "up", "down"
+ *     倾斜趋势: "right~", "left~", "up~", "down~" (未达到25度，但>5度)
+ *     水平状态: "flat" (所有角度<5度)
+ * - 第2行右侧: 角度显示 (x:96-127, y:32-47)
+ *   格式: "30°", "15°" 等
+ * - 第3行: 完整用于棋盘显示，无右侧信息区
+ * 
+ * 布局方案:
+ * - 第0行: ". . . " + "sc:100"
+ * - 第1行: ". . . " + "right"
+ * - 第2行: ". . . " + "30°"  
+ * - 第3行: ". . .  OVER" (完整显示)
+ */
+
 #include "2048_oled.h"
+#include "oled_print.h"
+#include <math.h>
+#include <string.h>
+#include <stdio.h>
 
 #define SIZE 4
 
 int board[SIZE][SIZE];
+
+/*用来存储信息，
+info[0]:方向
+info[1]:角度
+info[2]:结束
+
+*/
+
+char *info[3] = {NULL, NULL, NULL};  // 初始化为NULL指针
+
 int score = 0;
-int flagisgameover=0;
+int flagisgameover = 0;
+
+
+// 在程序开始处添加初始化函数
+void init_info() {
+    for(int i = 0; i < 3; i++) {
+        if(info[i] != NULL) {
+            free(info[i]);
+        }
+        info[i] = malloc(16);  // 分配足够空间
+        strcpy(info[i], "");   // 初始化为空字符串
+    }
+}
+
+// 在程序结束处添加清理函数
+void cleanup_info() {
+    for(int i = 0; i < 3; i++) {
+        if(info[i] != NULL) {
+            free(info[i]);
+            info[i] = NULL;
+        }
+    }
+}
+
 // 新增数字的逻辑
 void addNum()
 {
@@ -276,173 +367,270 @@ int isGameover()
   return 1;
 }
 
-// 靠mpu6050的体感来操控方向的方法
-int getmove()
+// 将加速度转换为角度
+void calculate_tilt_angles(short ax, short ay, short az, float *angle_x, float *angle_y)
+{
+  // 计算倾斜角度
+  // angle_x: 绕Y轴旋转的pitch角度 (前后倾斜)
+  // angle_y: 绕X轴旋转的roll角度 (左右倾斜)
+  
+  // 使用双精度浮点数计算以提高精度
+  double ax_d = (double)ax;
+  double ay_d = (double)ay;
+  double az_d = (double)az;
+  
+  *angle_x = atan2(ax_d, sqrt(ay_d * ay_d + az_d * az_d)) * 180.0 / 3.14159265;
+  *angle_y = atan2(ay_d, sqrt(ax_d * ax_d + az_d * az_d)) * 180.0 / 3.14159265;
+}
+
+// 靠mpu6050的体感来操控方向的方法(基于角度)
+int 
+getmove()
 {
     short ax, ay, az;
     static int last_direction = -1;
+    static int need_reset = 0;
     int current_direction = -1;
-    int threshold = 3000; // 加速度阈值，可根据实际情况调整
+    float angle_x, angle_y;
     
-    // 获取加速度数据
+    const float trigger_threshold = 20.0;
+    const float reset_threshold = 10.0;
+    
+    // 确保info数组已初始化
+    static int info_initialized = 0;
+    if(!info_initialized) {
+        init_info();
+        info_initialized = 1;
+    }
+    
     if (MPU_Get_Accelerometer(&ax, &ay, &az) == 0)
     {
-        // 根据加速度判断倾斜方向
-        // 注意：这里的阈值可能需要根据实际情况调整
-        if (abs(ax) < 1000 && abs(ay) < 1000) {
-            // 接近水平，不移动
-            return -1;
+        calculate_tilt_angles(ax, ay, az, &angle_x, &angle_y);
+        
+        char direction_text[10] = "neutral";  // 初始设为中性状态
+        float display_angle = 0;
+        
+        if ((angle_x > 0 ? angle_x : -angle_x) > (angle_y > 0 ? angle_y : -angle_y))
+        {
+            display_angle = angle_x;
+            // 无论是否达到触发角度，都设置方向文本
+            if(angle_x < -trigger_threshold)
+            {
+                current_direction = 2;
+                strcpy(direction_text, "up   ");
+            }
+            else if(angle_x > trigger_threshold)
+            {
+                current_direction = 3;
+                strcpy(direction_text, "down ");
+            }
+            else
+            {
+                // 未达到触发角度，但显示倾斜趋势
+                current_direction = -1;
+                if(angle_x < -5.0) {
+                    strcpy(direction_text, "up~   ");  // 有向上倾斜趋势
+                } else if(angle_x > 5.0) {
+                    strcpy(direction_text, "down~"); // 有向下倾斜趋势
+                } else {
+                    strcpy(direction_text, "flat ");  // 接近水平
+                }
+            }
+        }
+        else
+        {
+            display_angle = angle_y;
+            // 无论是否达到触发角度，都设置方向文本
+            if(angle_y > trigger_threshold)
+            {
+                current_direction = 1;
+                strcpy(direction_text, "right");
+            }
+            else if(angle_y < -trigger_threshold)
+            {
+                current_direction = 0;
+                strcpy(direction_text, "left  ");
+            }
+            else
+            {
+                // 未达到触发角度，但显示倾斜趋势
+                current_direction = -1;
+                if(angle_y > 5.0) {
+                    strcpy(direction_text, "right~"); // 有向右倾斜趋势
+                } else if(angle_y < -5.0) {
+                    strcpy(direction_text, "left~  ");  // 有向左倾斜趋势
+                } else {
+                    strcpy(direction_text, "flat   ");  // 接近水平
+                }
+            }
         }
         
-        // 判断主要倾斜方向
-        if (abs(ax) > abs(ay)) {
-            // X轴方向占主导
-            if (ax > threshold) {
-                current_direction = 1; // 右
-            } else if (ax < -threshold) {
-                current_direction = 0; // 左
+        // 安全地保存到info数组
+        if(info[0] != NULL) {
+            strncpy(info[0], direction_text, 15);
+            info[0][15] = '\0';
+        }
+        
+        if(info[1] != NULL) {
+            snprintf(info[1], 16, " %.1f°     ", display_angle);
+        }
+        
+        // 检查是否需要重置
+        if(need_reset)
+        {
+            if((angle_x < reset_threshold && angle_x > -reset_threshold) && 
+               (angle_y < reset_threshold && angle_y > -reset_threshold))
+            {
+                need_reset = 0;
+                last_direction = -1;
             }
-        } else {
-            // Y轴方向占主导
-            if (ay > threshold) {
-                current_direction = 2; // 下
-            } else if (ay < -threshold) {
-                current_direction = 3; // 上
+            else
+            {
+                return -1;
             }
         }
         
-        // 只有在方向发生改变时才返回新的方向，避免连续移动
-        if (current_direction != last_direction && current_direction != -1) {
-            last_direction = current_direction;
+        if(current_direction != -1 && !need_reset)
+        {
+            need_reset = 1;
             return current_direction;
         }
-        
-        // 如果回到水平状态，重置last_direction
-        if (abs(ax) < 1000 && abs(ay) < 1000) {
-            last_direction = -1;
-        }
     }
-    
-    return -1; // 无有效移动
+
+    return -1;
 }
 
+// 游戏运行界面
 
-//游戏运行界面
-
-//打印棋盘
+// 打印棋盘
 void printBoard()
 {
-  for (int i = 0; i < SIZE; i++)
-  {
-    char c[SIZE];
-    for (int  j = 0; j < SIZE; j++)
-    {
-      int  number = board[i][j];
-      if (number<10)
-      {
-        c[j]=number+'0';
-      }else if (number == 16  )
-      {
-        c[j] = 'A';
-      }else if (number == 32 )
-      {
-        c[j] = 'B';
-      }else if (number == 64)
-      {
-        c[j] = 'C';
-      }else if (number == 128)
-      {
-        c[j] = 'D';
-      }else if (number == 256)
-      {
-        c[j] = 'E';
-      }else if (number == 512)
-      {
-        c[j] = 'F';
-      }else if (number == 1024)
-      {
-        c[j] = 'G';
-      }else if (number == 2048)
-      {
-        c[j] = 'H';
-      }
-      
-      
-      
-      
-      
+    // 安全地设置游戏结束状态
+    if(info[2] != NULL) {
+        strncpy(info[2], flagisgameover ? "over" : " ", 15);
+        info[2][15] = '\0';
     }
     
-    if (i==0)
+    for(int i = 0; i < SIZE; i++)
     {
-        OLED_Printf_Line(i,"%c  %c  %c  %c score:%d",
-      board[i][0]?c[0]:'.',
-    board[i][1]?c[1]:'.',
-  board[i][2]?c[2]:'.',
-board[i][3]?c[3]:'.',score);
+        char c[SIZE];
+        for(int j = 0; j < SIZE; j++)
+        {
+            int number = board[i][j];
+            if(number < 10)
+            {
+                c[j] = number + '0';
+            }
+            else if(number == 16)
+            {
+                c[j] = 'A';
+            }
+            else if(number == 32)
+            {
+                c[j] = 'B';
+            }
+            else if(number == 64)
+            {
+                c[j] = 'C';
+            }
+            else if(number == 128)
+            {
+                c[j] = 'D';
+            }
+            else if(number == 256)
+            {
+                c[j] = 'E';
+            }
+            else if(number == 512)
+            {
+                c[j] = 'F';
+            }
+            else if(number == 1024)
+            {
+                c[j] = 'G';
+            }
+            else if(number == 2048)
+            {
+                c[j] = 'H';
+            }
+            else
+            {
+                c[j] = '.';
+            }
+        }
+
+        if(i == 0)
+        {
+            OLED_Printf_Line(i, "%c  %c  %c  %c sc:%d",
+                           board[i][0] ? c[0] : '.',
+                           board[i][1] ? c[1] : '.', 
+                           board[i][2] ? c[2] : '.',
+                           board[i][3] ? c[3] : '.', 
+                           score);
+        }
+        else
+        {
+            // 安全地显示info信息
+            const char* display_info = "";
+            if(i-1 < 3 && info[i-1] != NULL) {
+                display_info = info[i-1];
+            }
+            
+            OLED_Printf_Line(i, "%c  %c  %c  %c %s   ",
+                           board[i][0] ? c[0] : '.',
+                           board[i][1] ? c[1] : '.',
+                           board[i][2] ? c[2] : '.',
+                           board[i][3] ? c[3] : '.',
+                           display_info);
+        }
     }
-    else
-    {
-    OLED_Printf_Line(i,"%c  %c  %c  %c %s",
-     board[i][0]?c[0]:'.',
-    board[i][1]?c[1]:'.',
-  board[i][2]?c[2]:'.',
-board[i][3]?c[3]:'.',
-flagisgameover?" OVER":" ");
-  }}
-  OLED_Refresh_Dirty();
+    OLED_Refresh_Dirty();
 }
 
-
-
-
-//
 void game_running_2048()
 {
- init();
- u8 key ;
- 
- // 确保MPU6050已初始化
- static u8 mpu_initialized = 0;
- if (!mpu_initialized) {
-     MPU_Init();
-     mpu_initialized = 1;
- }
- 
- while (1)
- {
-  if (isGameover())
-  {
-    flagisgameover=1;
-  }
-  
-  printBoard();
+    init();
+    init_info();  // 初始化info数组
+    u8 key;
 
-  int fx = getmove(); // 获得移动方向
-
-  if (fx != -1 && move(fx)) // 只有当有有效移动方向且实际移动时才添加新数字
-  {
-    addNum();
-    delay_ms(300); // 添加延迟防止过于灵敏的响应
-  }
-  
-  key = KEY_Get();
-  if (key)
-  {
-    switch (key)
+    static u8 mpu_initialized = 0;
+    if(!mpu_initialized)
     {
-    case KEY2_PRES:
-    OLED_Clear();
-      return;
-    
-    default:
-      break;
+        MPU_Init();
+        mpu_initialized = 1;
     }
-  }
-  
- }
-}
 
+    while(1)
+    {
+        if(isGameover())
+        {
+            flagisgameover = 1;
+        }
+
+        printBoard();
+
+        int fx = getmove();
+        if(fx != -1 && move(fx))
+        {
+            addNum();
+            delay_ms(300);
+        }
+
+        key = KEY_Get();
+        if(key)
+        {
+            switch(key)
+            {
+            case KEY2_PRES:
+                cleanup_info();  // 清理内存
+                OLED_Clear();
+                return;
+            default:
+                break;
+            }
+        }
+    }
+}
 
 // 游戏菜单界面
 // 选项
@@ -498,7 +686,7 @@ void menu_2048_enter_select(u8 selected)
   }
 }
 
-//游戏菜单主函数
+// 游戏菜单主函数
 void menu_2048_oled()
 {
   u8 flag_Re = 1;
@@ -531,4 +719,3 @@ void menu_2048_oled()
     }
   }
 }
-

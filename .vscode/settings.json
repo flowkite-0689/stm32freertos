@@ -7,7 +7,12 @@
     "key.h": "c",
     "sdl.h": "c",
     "cstdint": "c",
-    "oled_print.h": "c"
+    "oled_print.h": "c",
+    "cmath": "c",
+    "numeric": "c",
+    "cinttypes": "c",
+    "cstdlib": "c",
+    "mpu6050.h": "c"
   },
   "cmake.sourceDirectory": "/mnt/d/codeStudy/c/stm32/study/demo/User/OLED/simulator"
 }
