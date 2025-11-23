@@ -72,14 +72,14 @@ void stopwatch(void)
  */
 void Display_Stopwatch(StopwatchState* state)
 {
-    OLED_Printf_Line(0, "   STOPWATCH");
+    
     
     uint32_t total_seconds = state->elapsed_time / 1000;
     uint32_t minutes = (total_seconds / 60) % 60;
     uint32_t seconds = total_seconds % 60;
     uint32_t milliseconds = state->elapsed_time % 1000 / 10;
     
-    OLED_Printf_Line(1, "   %02lu:%02lu:%02lu", minutes, seconds, milliseconds);
+    OLED_Printf_Line_32(0, " %02lu:%02lu:%02lu", minutes, seconds, milliseconds);
     
     if(state->running) {
         OLED_Printf_Line(2, "    RUNNING");
