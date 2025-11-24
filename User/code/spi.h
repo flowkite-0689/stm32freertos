@@ -42,14 +42,18 @@
 
 void SPI1_Init(void);
 uint8_t SPI1_ReadWriteByte(uint8_t txData);
+void SPI1_WriteBytes(uint8_t *pData, uint16_t size);
+void SPI1_ReadBytes(uint8_t *pData, uint16_t size);
 uint32_t W25Q128_ReadID(void);
 uint8_t W25Q128_WaitForWriteEnd(void);
 void W25Q128_WriteEnable(void);
 uint8_t W25Q128_SectorErase(uint32_t SectorAddr);
 uint8_t W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
+uint8_t W25Q128_WritePage_Optimized(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
 uint8_t W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
 void W25Q128_ReadData(uint8_t *pBuffer, uint32_t ReadAddr, uint16_t NumByteToRead);
-uint8_t W25Q128_IsBusy(void);   // 添加这一行
+uint8_t W25Q128_IsBusy(void);
+void W25Q128_SetHighSpeedMode(void);
 
 
 #endif

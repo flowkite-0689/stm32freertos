@@ -77,7 +77,7 @@ void print_fresult(FRESULT fr)
 void filesystem_test(void)
 {
     printf("\n========== W25Q128 FatFs Test Start ==========\n");
-    
+    W25Q128_SetHighSpeedMode();
     /* 1. 挂载 */
     printf("Mounting filesystem...");
     OLED_Printf_Line(0,"W25Q128 FatFs Test Start ");

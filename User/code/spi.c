@@ -38,7 +38,7 @@ void SPI1_Init(void)
 	SPI_InitStruct.SPI_CPOL =SPI_CPOL_Low; 			// SCK空闲低电平.spi模式0
 	SPI_InitStruct.SPI_CPHA = SPI_CPHA_1Edge;		// 第1边沿采集数据
 	SPI_InitStruct.SPI_NSS = SPI_NSS_Soft;			// 软件模式
-	SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16; // 频率84M/16 = 5.25MHz
+	SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_4; // 频率84M/4 = 21MHz (优化后)
 	SPI_InitStruct.SPI_FirstBit = SPI_FirstBit_MSB;	// 高位先发
 	SPI_InitStruct.SPI_CRCPolynomial = 0x7;			// 暂时没有用硬件CRC,该参数设置了也没用
 	SPI_Init(SPI1, &SPI_InitStruct);
@@ -59,6 +59,30 @@ uint8_t SPI1_ReadWriteByte(uint8_t txData)
 	while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET);
 	
 	return SPI_I2S_ReceiveData(SPI1);	// 读取并返回接收的数据
+}
+
+// 批量写入数据（优化后的函数）
+void SPI1_WriteBytes(uint8_t *pData, uint16_t size)
+{
+    for(uint16_t i = 0; i < size; i++)
+    {
+        while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
+        SPI_I2S_SendData(SPI1, pData[i]);
+    }
+    // 等待最后一个字节传输完成
+    while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_BSY) == SET);
+}
+
+// 批量读取数据
+void SPI1_ReadBytes(uint8_t *pData, uint16_t size)
+{
+    for(uint16_t i = 0; i < size; i++)
+    {
+        while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_TXE) == RESET);
+        SPI_I2S_SendData(SPI1, 0xFF); // 发送dummy数据
+        while(SPI_I2S_GetFlagStatus(SPI1, SPI_I2S_FLAG_RXNE) == RESET);
+        pData[i] = SPI_I2S_ReceiveData(SPI1);
+    }
 }
 
 uint32_t W25Q128_ReadID(void)
@@ -141,7 +165,6 @@ uint8_t W25Q128_SectorErase(uint32_t SectorAddr)
 uint8_t W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
 {
     uint8_t result;
-    uint16_t i;
     
     if (pBuffer == NULL || NumByteToWrite == 0 || NumByteToWrite > W25Q128_PAGE_SIZE) {
         return W25Q128_RESULT_ERROR;
@@ -158,14 +181,80 @@ uint8_t W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByte
     SPI1_ReadWriteByte((WriteAddr >> 16) & 0xFF);
     SPI1_ReadWriteByte((WriteAddr >> 8) & 0xFF);
     SPI1_ReadWriteByte(WriteAddr & 0xFF);
-    for (i = 0; i < NumByteToWrite; i++)
-    {
-        SPI1_ReadWriteByte(pBuffer[i]);
-    }
+    
+    // 使用批量写入优化性能
+    SPI1_WriteBytes(pBuffer, NumByteToWrite);
+    
     SPI_NSS_H;
     
     result = W25Q128_WaitForWriteEnd(); // 等待写操作完成
     return result;
+}
+
+// 优化的页写入函数（更高性能）
+uint8_t W25Q128_WritePage_Optimized(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite)
+{
+    uint8_t result;
+    uint8_t cmd_addr[4];
+    
+    if (pBuffer == NULL || NumByteToWrite == 0 || NumByteToWrite > W25Q128_PAGE_SIZE) {
+        return W25Q128_RESULT_ERROR;
+    }
+    
+    result = W25Q128_WaitForWriteEnd();
+    if (result != W25Q128_RESULT_OK) {
+        return result;
+    }
+    
+    W25Q128_WriteEnable();
+    
+    // 准备命令和地址
+    cmd_addr[0] = W25X_PageProgram;
+    cmd_addr[1] = (WriteAddr >> 16) & 0xFF;
+    cmd_addr[2] = (WriteAddr >> 8) & 0xFF;
+    cmd_addr[3] = WriteAddr & 0xFF;
+    
+    SPI_NSS_L;
+    
+    // 一次性发送命令和地址
+    SPI1_WriteBytes(cmd_addr, 4);
+    
+    // 批量写入数据
+    SPI1_WriteBytes(pBuffer, NumByteToWrite);
+    
+    SPI_NSS_H;
+    
+    result = W25Q128_WaitForWriteEnd();
+    return result;
+}
+
+// 设置W25Q128为高速模式
+void W25Q128_SetHighSpeedMode(void)
+{
+    uint8_t status;
+    
+    // 读取当前状态寄存器
+    SPI_NSS_L;
+    SPI1_ReadWriteByte(W25X_ReadStatusReg1);
+    status = SPI1_ReadWriteByte(W25X_Dummy);
+    SPI_NSS_H;
+    
+    // 如果已经设置为高速模式，则跳过
+    if ((status & 0x01) == 0) {
+        return;
+    }
+    
+    // 写使能
+    W25Q128_WriteEnable();
+    
+    // 写入状态寄存器，设置为高速模式
+    SPI_NSS_L;
+    SPI1_ReadWriteByte(W25X_WriteStatusReg1);
+    SPI1_ReadWriteByte(0x00); // 设置为高速模式
+    SPI_NSS_H;
+    
+    // 等待写操作完成
+    W25Q128_WaitForWriteEnd();
 }
 
 // 任意地址写入，页满则下一页写入，到芯片最后地址则停止写入
