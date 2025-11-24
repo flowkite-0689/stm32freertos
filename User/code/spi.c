@@ -45,6 +45,7 @@ void SPI1_Init(void)
 	
 	// 5) Ê¹ÄÜSPI
 	SPI_Cmd(SPI1, ENABLE);
+    printf("spi OK\r\n");
 }
 
 uint8_t SPI1_ReadWriteByte(uint8_t txData)

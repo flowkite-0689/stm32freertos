@@ -31,7 +31,7 @@ void step(void)
     unsigned long last_count = g_step_count;
     
     while(1)
-    {
+    {IWDG_ReloadCounter();
         // 全局闹钟处理 - 在计步器界面也能处理闹钟
         if (Alarm_GlobalHandler()) {
             continue; // 如果正在处理闹钟提醒，跳过计步器循环的其他部分

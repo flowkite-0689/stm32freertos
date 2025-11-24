@@ -15,7 +15,7 @@ void flashlight()
   OLED_Refresh_Dirty();
   u8 key ;
   while (1)
-  {
+  {IWDG_ReloadCounter();
     // 全局闹钟处理 - 在手电筒界面也能处理闹钟
     if (Alarm_GlobalHandler()) {
         delay_ms(10);

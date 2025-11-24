@@ -21,7 +21,7 @@ debug_init();
         delay_ms(10);
         continue; // 如果正在处理闹钟提醒，跳过温湿度循环的其他部分
     }
-    
+    IWDG_ReloadCounter();
     delay_ms(10);
     if ((key =KEY_Get())!=0)
     {
@@ -50,8 +50,8 @@ debug_init();
 					OLED_Printf_Line(3, "Code: %d", result);
 
         }
-	OLED_Refresh_Dirty();
-    delay_ms(3000);
+	  OLED_Refresh_Dirty();
+    delay_ms(1000);
   }
   
 }

@@ -671,7 +671,7 @@ void game_running_2048()
     }
 
     while(1)
-    {
+    {IWDG_ReloadCounter();
         if(isGameover())
         {
             flagisgameover = 1;
@@ -777,7 +777,7 @@ void menu_2048_oled()
   u8 key;
   u8 selected = 0;
   while (1)
-  {
+  {IWDG_ReloadCounter();
     if (flag_Re)
     {
       menu_2048_oled_RE(selected);

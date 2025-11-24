@@ -11,6 +11,7 @@
 #include "MPU6050/eMPL/inv_mpu_dmp_motion_driver.h"
 #include "simple_pedometer.h"
 #include <stdlib.h> // ????abs????????
+#include "iwdg.h"
 // ????????
 #define options_NUM 7
 
@@ -101,12 +102,12 @@ u8 menu(u8 cho)
 	delay_ms(10);
 	u8 flag_RE = 1;
 	u8 selected = cho;
-
+	u32 current_time =get_systick();
 	u8 key;
 	while (1)
 	{
 		delay_ms(10);
-
+IWDG_ReloadCounter();
 		// 全局闹钟处理 - 在菜单界面也能处理闹钟
 		if (Alarm_GlobalHandler())
 		{
@@ -117,13 +118,15 @@ u8 menu(u8 cho)
 		{
 			OLED_Clear();
 			menu_Refresh(selected);
-
+			current_time =get_systick();
 			flag_RE = 0;
 		}
 
 		if ((key = KEY_Get()) != 0)
 		{
-			switch (key)
+			if (get_systick()-current_time > 500)
+			{
+				switch (key)
 			{
 			case KEY0_PRES:
 				if (selected == 0)
@@ -154,6 +157,9 @@ u8 menu(u8 cho)
 			default:
 				break;
 			}
+			}
+			
+			
 		}
 	}
 }
@@ -165,8 +171,8 @@ int main()
 	debug_init();
 	printf("\ndebug init OK:");
 	printf("------------------------------------------------------>>\r\n");
-KEY_Init();
-printf("key init OK\r\n");
+  KEY_Init();
+  printf("key init OK\r\n");
 	OLED_Init();
 
 	OLED_ShowPicture(32, 0, 64, 64, gImage_bg, 1);
@@ -178,7 +184,7 @@ printf("key init OK\r\n");
 
 	
 	OLED_Refresh(); // ????
- printf("\r\n");
+  printf("\r\n");
 	MPU_Init();
 
 	// ??MPU6050??ID
@@ -202,7 +208,8 @@ printf("key init OK\r\n");
 	simple_pedometer_init(); 
 
 	// ????????????DMP????????????????
-
+  SPI1_Init();
+  
 	u8 key;
 	u8 cho = 0;
 	unsigned long last_count = 0;
@@ -214,6 +221,8 @@ printf("key init OK\r\n");
 	// RTC_SetTime_Manual(23, 59, 57);
 	printf("\r\n");
 	printf("<<----------------------------------------------system init OK!\r\n");
+
+	IWDG_Init();
 	// ?????
 	while (1)
 	{
@@ -223,7 +232,8 @@ printf("key init OK\r\n");
 			delay_ms(100); // 给闹钟显示留出时间
 			continue;			 // 如果正在处理闹钟提醒，跳过主循环的其他部分
 		}
-
+     
+		IWDG_ReloadCounter();
 		// 备用闹钟检查 - 防止中断失效
 		Alarm_Check();
 		
@@ -232,7 +242,7 @@ printf("key init OK\r\n");
 		
 		// 只有真正到达00:00:00-00:00:30范围内才触发测试闹钟
 		if (g_RTC_Time.RTC_Hours == 0 && g_RTC_Time.RTC_Minutes == 0 && 
-		    g_RTC_Time.RTC_Seconds >= 0 && g_RTC_Time.RTC_Seconds <= 30 &&
+		     g_RTC_Time.RTC_Seconds <= 30 &&
 		    !alarm_alert_active) {
 			// 确保真的到了00:00:00之后才触发（避免RTC时间同步问题）
 			static uint8_t trigger_flag = 0;

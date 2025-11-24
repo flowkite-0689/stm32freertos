@@ -6,7 +6,7 @@ char *test_opt[] = {
     "2048_oled",
     "light_test",
     "filesystem_test",
-  "iwdg_test"};
+    "iwdg_test"};
 
 #define TOTAL_ITEMS (sizeof(test_opt) / sizeof(test_opt[0]))
 
@@ -30,12 +30,12 @@ void SPI_test()
   else
   {
     printf("读到的ID失败:%#x\n", id);
-      OLED_Printf_Line(2, "ERR:%#x\n", id);
+    OLED_Printf_Line(2, "ERR:%#x\n", id);
   }
   OLED_Refresh_Dirty();
   u8 key;
   while (1)
-  {
+  {IWDG_ReloadCounter();
     delay_ms(10);
     key = KEY_Get();
     if (key)
@@ -59,15 +59,15 @@ void test_enter_select(u8 selected)
   case 0:
     SPI_test();
     break;
-    case 1 :
+  case 1:
     menu_2048_oled();
     break;
-case 3 :
-filesystem_test();
-break;
-case 4:
-iwdg_test();
-break;
+  case 3:
+    filesystem_test();
+    break;
+  case 4:
+    iwdg_test();
+    break;
   default:
     break;
   }
@@ -114,50 +114,55 @@ void testlist()
   u8 flag_RE = 1;
   u8 selected = 0;
   tsetlist_RE(selected);
+  u32 current_time = get_systick();
   u8 key;
   while (1)
-  {
+  {IWDG_ReloadCounter();
     delay_ms(10);
     if (flag_RE)
     {
       OLED_Clear();
       tsetlist_RE(selected);
+      current_time = get_systick();
       flag_RE = 0;
     }
 
     if ((key = KEY_Get()) != 0)
     {
-      switch (key)
+      if (get_systick() - current_time > 500)
       {
-      case KEY0_PRES:
-        if (selected == 0)
+        switch (key)
         {
-          selected = TOTAL_ITEMS - 1; // 0?????????
+        case KEY0_PRES:
+          if (selected == 0)
+          {
+            selected = TOTAL_ITEMS - 1; // 0?????????
+          }
+          else
+          {
+            selected--;
+          }
+          tsetlist_RE(selected);
+
+          break;
+        case KEY1_PRES:
+          selected++;
+          selected = selected % TOTAL_ITEMS;
+          tsetlist_RE(selected);
+          break;
+        case KEY2_PRES:
+          OLED_Clear();
+          return;
+
+        case KEY3_PRES:
+          flag_RE = 1;
+          OLED_Clear();
+          test_enter_select(selected); // ???????????????
+          break;
+
+        default:
+          break;
         }
-        else
-        {
-          selected--;
-        }
-        tsetlist_RE(selected);
-
-        break;
-      case KEY1_PRES:
-        selected++;
-        selected = selected % TOTAL_ITEMS;
-        tsetlist_RE(selected);
-        break;
-      case KEY2_PRES:
-        OLED_Clear();
-        return;
-
-      case KEY3_PRES:
-        flag_RE = 1;
-        OLED_Clear();
-        test_enter_select(selected); // ???????????????
-        break;
-
-      default:
-        break;
       }
     }
   }

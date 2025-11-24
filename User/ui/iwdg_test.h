@@ -11,5 +11,5 @@
 #include "uart_dma.h"
 #include "delay.h"
 
-
+void iwdg_test(void);
 #endif

@@ -20,7 +20,7 @@ void IWDG_Init(void)
 	// 设置重装载值
 	// 超时时间 = (重装载值 + 1) / 计数器时钟频率
 	// 3000ms = (2999 + 1) / 1kHz
-	IWDG_SetReload(1999); // 2秒超时
+	IWDG_SetReload(2999); // 2秒超时
 
 	// 重载IWDG计数器
 	IWDG_ReloadCounter();
