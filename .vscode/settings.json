@@ -12,7 +12,8 @@
     "numeric": "c",
     "cinttypes": "c",
     "cstdlib": "c",
-    "mpu6050.h": "c"
+    "mpu6050.h": "c",
+    "iwdg.h": "c"
   },
   "cmake.sourceDirectory": "/mnt/d/codeStudy/c/stm32/study/demo/User/OLED/simulator"
 }

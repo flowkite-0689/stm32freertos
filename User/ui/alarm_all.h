@@ -3,6 +3,7 @@
 
 #include "stm32f4xx.h"
 #include "rtc_date.h"
+#include <stdint.h>
 
 // 最大闹钟数量
 #define MAX_ALARMS 10

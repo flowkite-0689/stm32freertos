@@ -163,7 +163,7 @@ int main()
 
 	
 	debug_init();
-	printf("debug init OK:");
+	printf("\ndebug init OK:");
 	printf("------------------------------------------------------>>\r\n");
 KEY_Init();
 printf("key init OK\r\n");
@@ -199,7 +199,7 @@ printf("key init OK\r\n");
 	}
 
 	// ????????
-	simple_pedometer_init();
+	simple_pedometer_init(); 
 
 	// ????????????DMP????????????????
 

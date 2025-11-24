@@ -9,21 +9,10 @@
 #include "code/spi.h"
 #include "stm32f4xx_rtc.h"
 #include "stm32f4xx_pwr.h"
+#include "alarm_file.h"
 #include <string.h>
 #include <stdio.h>
-
-// 最大闹钟数量
-#define MAX_ALARMS 10
-
-// 闹钟结构体
-typedef struct {
-    uint8_t hour;
-    uint8_t minute;
-    uint8_t second;
-    uint8_t enabled;
-    uint8_t repeat;         // 0=一次性, 1=每天重复
-    uint8_t daysOfWeek;     // 位标志：bit0=周一 ... bit6=周日
-} Alarm_TypeDef;
+#include <stdint.h>
 
 // 全局闹钟数组
 Alarm_TypeDef g_alarms[MAX_ALARMS];
@@ -37,7 +26,6 @@ uint8_t alarm_alert_active = 0;
 // 内部函数声明
 static void Alarm_RTC_Config(void);
 static void Alarm_SetRTCAlarm(void);
-static void Alarms_Load(void);
 static void Display_Alarm_Alert(Alarm_TypeDef* alarm);
 static void Update_Alarm_Alert_Display(Alarm_TypeDef* alarm);
 
@@ -80,113 +68,9 @@ static void Alarm_RTC_Config(void)
 // 闹钟数据在W25Q128中的存储地址
 #define ALARM_DATA_BASE_ADDR    0x000000   // 从W25Q128起始地址开始存储
 
-/**
- * @brief 保存闹钟到W25Q128 Flash
- */
-void Alarms_Save(void)
-{
-    uint8_t buffer[2 + MAX_ALARMS * sizeof(Alarm_TypeDef)];  // 前2字节存储闹钟数量
-    uint16_t buffer_size = 0;
-    uint32_t write_addr = ALARM_DATA_BASE_ADDR;
-    
-    printf("Saving %d alarms to W25Q128 Flash\r\n", g_alarm_count);
-    
-    // 检查W25Q128是否存在
-    uint32_t flash_id = W25Q128_ReadID();
-    if (flash_id != W25X_JEDECID) {
-        printf("W25Q128 not available, skipping alarm save\r\n");
-        return;
-    }
-    
-    // 首先擦除存储区域（擦除第一个扇区即可）
-    W25Q128_SectorErase(write_addr);
-    
-    // 准备数据缓冲区
-    buffer[0] = g_alarm_count;  // 存储闹钟数量
-    buffer[1] = 0;               // 保留字节，用于可能的校验或版本信息
-    buffer_size = 2;
-    
-    // 复制闹钟数据到缓冲区
-    memcpy(buffer + buffer_size, g_alarms, g_alarm_count * sizeof(Alarm_TypeDef));
-    buffer_size += g_alarm_count * sizeof(Alarm_TypeDef);
-    
-    // 写入W25Q128 Flash
-    W25Q128_BufferWrite(buffer, write_addr, buffer_size);
-    
-    printf("Successfully saved %d alarms (%d bytes) to W25Q128\r\n", g_alarm_count, buffer_size);
-}
 
-/**
- * @brief 计算数据校验和
- * @param data 数据指针
- * @param length 数据长度
- * @return 校验和
- */
-/**
- * @brief 从W25Q128 Flash加载闹钟
- */
-void Alarms_Load(void)
-{
-    uint8_t buffer[2 + MAX_ALARMS * sizeof(Alarm_TypeDef)];
-    uint16_t buffer_size = 2;
-    uint32_t read_addr = ALARM_DATA_BASE_ADDR;
-    
-    printf("Loading alarms from W25Q128 Flash\r\n");
-    
-    // 尝试初始化SPI接口
-    printf("Initializing SPI1 for W25Q128...\r\n");
-    SPI1_Init();
-    
-    // 检查W25Q128是否存在
-    uint32_t flash_id = W25Q128_ReadID();
-    if (flash_id != W25X_JEDECID) {
-        printf("W25Q128 not available, skipping alarm load\r\n");
-        g_alarm_count = 0;
-        memset(g_alarms, 0, sizeof(g_alarms));
-        return;
-    }
-    
-    printf("W25Q128 Flash detected successfully (ID: 0x%06X)\r\n", flash_id);
-    
-    // 从W25Q128 Flash读取数据
-    W25Q128_ReadData(buffer, read_addr, buffer_size);
-    
-    // 获取保存的闹钟数量
-    g_alarm_count = buffer[0];
-    
-    // 检查数据有效性
-    if (g_alarm_count > MAX_ALARMS) {
-        printf("Invalid alarm count %d, resetting to 0\r\n", g_alarm_count);
-        g_alarm_count = 0;
-        memset(g_alarms, 0, sizeof(g_alarms));
-        return;
-    }
-    
-    // 如果有闹钟数据，读取它们
-    if (g_alarm_count > 0) {
-        uint16_t alarm_data_size = g_alarm_count * sizeof(Alarm_TypeDef);
-        W25Q128_ReadData((uint8_t*)g_alarms, read_addr + buffer_size, alarm_data_size);
-        
-        // 验证读取的数据是否合理（简单的边界检查）
-        for (uint8_t i = 0; i < g_alarm_count; i++) {
-            if (g_alarms[i].hour > 23 || g_alarms[i].minute > 59 || g_alarms[i].second > 59) {
-                printf("Invalid alarm data at index %d, resetting alarms\r\n", i);
-                g_alarm_count = 0;
-                memset(g_alarms, 0, sizeof(g_alarms));
-                return;
-            }
-        }
-    }
-    
-    printf("Successfully loaded %d alarms from W25Q128\r\n", g_alarm_count);
-    
-    // 显示加载的闹钟信息（调试用）
-    for (uint8_t i = 0; i < g_alarm_count; i++) {
-        printf("Alarm %d: %02d:%02d:%02d, enabled=%d, repeat=%d\r\n", 
-               i, g_alarms[i].hour, g_alarms[i].minute, g_alarms[i].second, 
-               g_alarms[i].enabled, g_alarms[i].repeat);
-    }
-}
+
+
 
 /**
  * @brief 添加新闹钟

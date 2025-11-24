@@ -49,5 +49,7 @@ uint8_t W25Q128_SectorErase(uint32_t SectorAddr);
 uint8_t W25Q128_WritePage(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
 uint8_t W25Q128_BufferWrite(uint8_t *pBuffer, uint32_t WriteAddr, uint16_t NumByteToWrite);
 void W25Q128_ReadData(uint8_t *pBuffer, uint32_t ReadAddr, uint16_t NumByteToRead);
+uint8_t W25Q128_IsBusy(void);   // 添加这一行
+
 
 #endif

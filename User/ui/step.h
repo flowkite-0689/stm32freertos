@@ -2,6 +2,7 @@
 #define __STEP_H
 
 #include "sys.h"
+#include <stdint.h>
 
 void step(void);
 

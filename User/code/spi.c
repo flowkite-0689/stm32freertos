@@ -38,7 +38,7 @@ void SPI1_Init(void)
 	SPI_InitStruct.SPI_CPOL =SPI_CPOL_Low; 			// SCK空闲低电平.spi模式0
 	SPI_InitStruct.SPI_CPHA = SPI_CPHA_1Edge;		// 第1边沿采集数据
 	SPI_InitStruct.SPI_NSS = SPI_NSS_Soft;			// 软件模式
-	SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2; // 频率84M/2 = 42MHz
+	SPI_InitStruct.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_16; // 频率84M/16 = 5.25MHz
 	SPI_InitStruct.SPI_FirstBit = SPI_FirstBit_MSB;	// 高位先发
 	SPI_InitStruct.SPI_CRCPolynomial = 0x7;			// 暂时没有用硬件CRC,该参数设置了也没用
 	SPI_Init(SPI1, &SPI_InitStruct);
@@ -237,4 +237,22 @@ void W25Q128_ReadData(uint8_t *pBuffer, uint32_t ReadAddr, uint16_t NumByteToRea
         pBuffer[i] = SPI1_ReadWriteByte(0xFF);
     }
     SPI_NSS_H;
+}
+
+uint8_t W25Q128_IsBusy(void)
+{
+    uint8_t status = 0;
+    uint32_t timeout = W25Q128_TIMEOUT_VALUE;  // 用你定义的超时值
+
+    do {
+        SPI_NSS_L;
+        SPI1_ReadWriteByte(W25X_ReadStatusReg1);
+        status = SPI1_ReadWriteByte(W25X_Dummy);
+        SPI_NSS_H;
+        if (--timeout == 0) {
+            return 1;  // 超时，返回忙（防止死循环）
+        }
+    } while (status & 0x01);  // 只要 BUSY 位是 1 就继续等
+
+    return 0;  // 不忙了
 }

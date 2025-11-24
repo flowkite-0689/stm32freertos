@@ -5,9 +5,8 @@ char *test_opt[] = {
     "SPI_test",
     "2048_oled",
     "light_test",
-    "test_1",
-    "t2",
-    "t3"};
+    "filesystem_test",
+  "iwdg_test"};
 
 #define TOTAL_ITEMS (sizeof(test_opt) / sizeof(test_opt[0]))
 
@@ -63,7 +62,12 @@ void test_enter_select(u8 selected)
     case 1 :
     menu_2048_oled();
     break;
-
+case 3 :
+filesystem_test();
+break;
+case 4:
+iwdg_test();
+break;
   default:
     break;
   }

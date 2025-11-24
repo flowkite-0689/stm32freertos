@@ -7,6 +7,9 @@
 #include "delay.h"
 #include "spi.h"
 #include "2048_oled.h"
+#include "filesystem_test.h"
+#include "ui.h"
+
 
 void testlist(void);
 #endif
