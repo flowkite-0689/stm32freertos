@@ -42,27 +42,69 @@ void print_fresult(FRESULT fr)
 {
     switch (fr)
     {
-    case FR_OK:                      printf("FR_OK"); break;
-        case FR_DISK_ERR:                printf("FR_DISK_ERR"); break;
-        case FR_INT_ERR:                 printf("FR_INT_ERR"); break;
-        case FR_NOT_READY:               printf("FR_NOT_READY"); break;
-        case FR_NO_FILE:                 printf("FR_NO_FILE"); break;
-        case FR_NO_PATH:                 printf("FR_NO_PATH"); break;
-        case FR_INVALID_NAME:            printf("FR_INVALID_NAME"); break;
-        case FR_DENIED:                  printf("FR_DENIED"); break;
-        case FR_EXIST:                   printf("FR_EXIST"); break;
-        case FR_INVALID_OBJECT:          printf("FR_INVALID_OBJECT"); break;
-        case FR_WRITE_PROTECTED:         printf("FR_WRITE_PROTECTED"); break;
-        case FR_INVALID_DRIVE:           printf("FR_INVALID_DRIVE"); break;
-        case FR_NOT_ENABLED:             printf("FR_NOT_ENABLED"); break;
-        case FR_NO_FILESYSTEM:           printf("FR_NO_FILESYSTEM"); break;
-        case FR_MKFS_ABORTED:            printf("FR_MKFS_ABORTED"); break;
-        case FR_TIMEOUT:                 printf("FR_TIMEOUT"); break;
-        case FR_LOCKED:                  printf("FR_LOCKED"); break;
-        case FR_NOT_ENOUGH_CORE:         printf("FR_NOT_ENOUGH_CORE"); break;
-        case FR_TOO_MANY_OPEN_FILES:     printf("FR_TOO_MANY_OPEN_FILES"); break;
-        case FR_INVALID_PARAMETER:       printf("FR_INVALID_PARAMETER"); break;
-        default:                         printf("Unknown error: %d", fr); break;
+    case FR_OK:
+        printf("FR_OK");
+        break;
+    case FR_DISK_ERR:
+        printf("FR_DISK_ERR");
+        break;
+    case FR_INT_ERR:
+        printf("FR_INT_ERR");
+        break;
+    case FR_NOT_READY:
+        printf("FR_NOT_READY");
+        break;
+    case FR_NO_FILE:
+        printf("FR_NO_FILE");
+        break;
+    case FR_NO_PATH:
+        printf("FR_NO_PATH");
+        break;
+    case FR_INVALID_NAME:
+        printf("FR_INVALID_NAME");
+        break;
+    case FR_DENIED:
+        printf("FR_DENIED");
+        break;
+    case FR_EXIST:
+        printf("FR_EXIST");
+        break;
+    case FR_INVALID_OBJECT:
+        printf("FR_INVALID_OBJECT");
+        break;
+    case FR_WRITE_PROTECTED:
+        printf("FR_WRITE_PROTECTED");
+        break;
+    case FR_INVALID_DRIVE:
+        printf("FR_INVALID_DRIVE");
+        break;
+    case FR_NOT_ENABLED:
+        printf("FR_NOT_ENABLED");
+        break;
+    case FR_NO_FILESYSTEM:
+        printf("FR_NO_FILESYSTEM");
+        break;
+    case FR_MKFS_ABORTED:
+        printf("FR_MKFS_ABORTED");
+        break;
+    case FR_TIMEOUT:
+        printf("FR_TIMEOUT");
+        break;
+    case FR_LOCKED:
+        printf("FR_LOCKED");
+        break;
+    case FR_NOT_ENOUGH_CORE:
+        printf("FR_NOT_ENOUGH_CORE");
+        break;
+    case FR_TOO_MANY_OPEN_FILES:
+        printf("FR_TOO_MANY_OPEN_FILES");
+        break;
+    case FR_INVALID_PARAMETER:
+        printf("FR_INVALID_PARAMETER");
+        break;
+    default:
+        printf("Unknown error: %d", fr);
+        break;
     }
 }
 
@@ -74,26 +116,28 @@ void filesystem_test(void)
     W25Q128_SetHighSpeedMode();
     /* 1. 挂载 */
     printf("Mounting filesystem...");
-    OLED_Printf_Line(0,"W25Q128 FatFs Test Start ");
+    OLED_Printf_Line(0, "W25Q128 FatFs Test Start ");
 
     OLED_Refresh();
     IWDG_ReloadCounter();
     // Try mount first
     fr = f_mount(&fs, "0:", 1);
-    if (fr != FR_OK) {
+    if (fr != FR_OK)
+    {
         OLED_Printf_Line(1, "Formatting...");
         OLED_Refresh();
         printf("No valid filesystem or mount failed (%d). Formatting...", fr);
 
         MKFS_PARM opt = {0};
-        opt.fmt      = FM_FAT32 | FM_SFD;  // SFD = Super Floppy (MBR not needed for flash)
-        opt.au_size  = 32 * 1024;          // 32KB cluster (optimal for 16MB; max FAT32 cluster = 32KB)
-        opt.align    = 0;
-        opt.n_fat    = 2;                  // 2 FATs for safety (default)
-        opt.n_root   = 0;                  // FAT32: root is a dir, not fixed entry count
+        opt.fmt = FM_FAT32 | FM_SFD; // SFD = Super Floppy (MBR not needed for flash)
+        opt.au_size = 32 * 1024;     // 32KB cluster (optimal for 16MB; max FAT32 cluster = 32KB)
+        opt.align = 0;
+        opt.n_fat = 2;  // 2 FATs for safety (default)
+        opt.n_root = 0; // FAT32: root is a dir, not fixed entry count
 
         fr = f_mkfs("0:", &opt, work, sizeof(work));
-        if (fr != FR_OK) {
+        if (fr != FR_OK)
+        {
             printf("f_mkfs failed: ");
             print_fresult(fr);
             return;
@@ -104,7 +148,8 @@ void filesystem_test(void)
         IWDG_ReloadCounter();
     }
 
-    if (fr != FR_OK) {
+    if (fr != FR_OK)
+    {
         printf("Mount failed: ");
         print_fresult(fr);
         return;
@@ -114,28 +159,33 @@ void filesystem_test(void)
     /* 2. 显示容量 */
     DWORD fre_clust, tot_sect, fre_sect;
     FATFS *fsp;
-    if (f_getfree("0:", &fre_clust, &fsp) == FR_OK) {
+    if (f_getfree("0:", &fre_clust, &fsp) == FR_OK)
+    {
         tot_sect = (fsp->n_fatent - 2) * fsp->csize;
         fre_sect = fre_clust * fsp->csize;
-        printf("Total: %lu KB, Free: %lu KB", tot_sect/2, fre_sect/2);
+        printf("Total: %lu KB, Free: %lu KB", tot_sect / 2, fre_sect / 2);
     }
 
     /* 3. 创建目录 */
     printf("Creating directory...");
     fr = f_mkdir(TEST_DIR);
     printf((fr == FR_OK || fr == FR_EXIST) ? "OK" : "Failed: ");
-    if (fr != FR_OK && fr != FR_EXIST) print_fresult(fr);
+    if (fr != FR_OK && fr != FR_EXIST)
+        print_fresult(fr);
 
     IWDG_ReloadCounter();
     /* 4. 写小文件 */
     printf("Writing small file %s...", TEST_FILE_1);
     fr = f_open(&file, TEST_FILE_1, FA_CREATE_ALWAYS | FA_WRITE);
-    if (fr == FR_OK) {
+    if (fr == FR_OK)
+    {
         const char *text = "Hello W25Q128 + FatFs! This is a test from 2025.";
-            f_write(&file, text, strlen(text), &bw);
+        f_write(&file, text, strlen(text), &bw);
         f_close(&file);
         printf("OK (%d bytes)", bw);
-    } else {
+    }
+    else
+    {
         printf("Open failed: ");
         print_fresult(fr);
     }
@@ -143,15 +193,18 @@ void filesystem_test(void)
 
     /* 4b. 测试长文件名 */
     printf("Testing long filename %s...", TEST_LFN_FILE);
-    OLED_Printf_Line(0,"Testing long filename %s...", TEST_LFN_FILE);
+    OLED_Printf_Line(0, "Testing long filename %s...", TEST_LFN_FILE);
     OLED_Refresh();
     fr = f_open(&file, TEST_LFN_FILE, FA_CREATE_ALWAYS | FA_WRITE);
-    if (fr == FR_OK) {
+    if (fr == FR_OK)
+    {
         const char *lfn_text = "This is a test of long filename support.  ";
-            f_write(&file, lfn_text, strlen(lfn_text), &bw);
+        f_write(&file, lfn_text, strlen(lfn_text), &bw);
         f_close(&file);
         printf("OK (%d bytes)", bw);
-    } else {
+    }
+    else
+    {
         printf("LFN test failed: ");
         print_fresult(fr);
     }
@@ -159,7 +212,8 @@ void filesystem_test(void)
     IWDG_ReloadCounter();
     /* 5. 读回小文件 */
     printf("Reading back %s...", TEST_FILE_1);
-    if (f_open(&file, TEST_FILE_1, FA_READ) == FR_OK) {
+    if (f_open(&file, TEST_FILE_1, FA_READ) == FR_OK)
+    {
         char rbuf[128] = {0};
         f_read(&file, rbuf, sizeof(rbuf) - 1, &br);
         f_close(&file);
@@ -169,56 +223,87 @@ void filesystem_test(void)
     IWDG_ReloadCounter();
     /* 6. 1MB 性能测试 */
     printf("Writing 1MB benchmark file...");
-    OLED_Printf_Line(0,"Writing 1MB benchmark file...");
+    OLED_Printf_Line(0, "Writing 1MB benchmark file...");
     fr = f_open(&file, TEST_FILE_2, FA_CREATE_ALWAYS | FA_WRITE);
-    if (fr != FR_OK) { printf("Open failed"); goto end; }
+    if (fr != FR_OK)
+    {
+        printf("Open failed");
+        goto end;
+    }
 
     memset(g_buffer, 0xA5, sizeof(g_buffer));
     uint32_t start = get_systick();
     int total_written = 0;
 
-    for (int i = 0; i < 32; i++) {           // 32 × 32KB = 1MB
-            fr = f_write(&file, g_buffer, sizeof(g_buffer), &bw);
-            if (fr != FR_OK || bw != sizeof(g_buffer))
-            {
+    for (int i = 0; i < 32; i++)
+    { // 32 × 32KB = 1MB
+        fr = f_write(&file, g_buffer, sizeof(g_buffer), &bw);
+        if (fr != FR_OK || bw != sizeof(g_buffer))
+        {
             printf("Write error at block %d", i);
             break;
-            }
-            total_written += bw;
-            IWDG_ReloadCounter();
+        }
+        total_written += bw;
+        IWDG_ReloadCounter();
     }
     f_close(&file);
 
     uint32_t elapsed = get_systick() - start;
     float seconds = elapsed / 1000.0f;
-    if (seconds < 0.001f) seconds = 0.001f;
+    if (seconds < 0.001f)
+        seconds = 0.001f;
     float speed = total_written / 1024.0f / seconds;
-    printf("1MB written in %.2f s -> %.1f KB/s", seconds, speed);
- OLED_Printf_Line(1,"1MB written in %.2f s -> %.1f KB/s", seconds, speed);
- OLED_Refresh();
+    printf("1MB written in %.2f s -> %.1f KB/s\n", seconds, speed);
+    OLED_Printf_Line(1, "1MB written in %.2f s -> %.1f KB/s", seconds, speed);
+    OLED_Refresh();
     /* 7. 目录列表 */
     printf("\nDirectory listing:\n");
-    if (f_opendir(&dir, "0:") == FR_OK) {
-            int file_count = 0;
-            while (f_readdir(&dir, &fno) == FR_OK && fno.fname[0])
+    if (f_opendir(&dir, "0:") == FR_OK)
+    {
+        int file_count = 0;
+        while (f_readdir(&dir, &fno) == FR_OK && fno.fname[0])
+        {
+            if (fno.fattrib & AM_DIR)
+               { printf(" <DIR>   %s\n", fno.fname);
+                OLED_Printf_Line(3," <DIR>   %s\n", fno.fname);
+            
+                   }    else
+                printf("        %lu  %s\n", (unsigned long)fno.fsize, fno.fname);
+            OLED_Printf_Line(2, " %lu  %s\n", (unsigned long)fno.fsize, fno.fname);
+            // 每处理10个文件喂一次狗，防止目录项过多导致超时
+            file_count++;
+            if (file_count % 10 == 0)
             {
-                if (fno.fattrib & AM_DIR)
-                    printf(" <DIR>   %s\n", fno.fname);
-                else
-                    printf("        %lu  %s\n", (unsigned long)fno.fsize, fno.fname);
-
-                // 每处理10个文件喂一次狗，防止目录项过多导致超时
-                file_count++;
-                if (file_count % 10 == 0)
-                {
-                    IWDG_ReloadCounter();
-                }
+                IWDG_ReloadCounter();
             }
-            f_closedir(&dir);
+            OLED_Refresh_Dirty();
+        }
+        f_closedir(&dir);
     }
     IWDG_ReloadCounter();
 
-end:IWDG_ReloadCounter();
+end:
+    IWDG_ReloadCounter();
     f_mount(NULL, "0:", 0);
     printf("========== W25Q128 FatFs Test End ==========");
+
+    u8 key;
+    while (1)
+    {
+        IWDG_ReloadCounter();
+
+        key = KEY_Get();
+        if (key)
+        {
+            switch (key)
+            {
+            case KEY2_PRES:
+
+                OLED_Clear();
+                return;
+            default:
+                break;
+            }
+        }
+    }
 }
