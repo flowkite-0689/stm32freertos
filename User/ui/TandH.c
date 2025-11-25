@@ -27,7 +27,7 @@ void TandH()
   KEY_Init();
   SysTick_Init(); // 初始化滴时器
   DHT11_Data_TypeDef dhtdata;
-   int16_t last_date_T=0;
+   int16_t last_date_T=250;
  int16_t last_date_H=0;
   u8 key;
   u32 last_re_time= get_systick();
@@ -42,7 +42,7 @@ void TandH()
       continue; // 如果正在处理闹钟提醒，跳过温湿度循环的其他部分
     }
     IWDG_ReloadCounter();
-    if (get_systick()-last_re_time>=1000)
+    if (get_systick()-last_re_time>=600)
     {
         
     result = Read_DHT11(&dhtdata);
@@ -71,10 +71,20 @@ void TandH()
       OLED_Printf_Line(2, "Humidity:  %d.%d%%",
                        dhtdata.humi_int, dhtdata.humi_deci);
                        // 横向温度计（支持小数：25.5°C → 255）
-    int16_t temp_tenth = dhtdata.temp_int * 10 + dhtdata.temp_deci;
+    
 
+    
+    }
+    else
+    {
+      // OLED_Clear_Line(2);
+      // OLED_Printf_Line(2, "DHT11 Error!    ");
+      // OLED_Printf_Line(3, "Code: %d        ", result);
+    }
+    int16_t temp_tenth = dhtdata.temp_int * 10 + dhtdata.temp_deci;
     if (temp_tenth >last_date_T)
     {
+      
      if (temp_tenth-last_date_T>=10)
      {
         last_date_T+=10;
@@ -99,13 +109,6 @@ void TandH()
 
     // 横向湿度条
     OLED_DrawHumidityBar_Line3(last_date_H);
-    }
-    else
-    {
-      // OLED_Clear_Line(2);
-      // OLED_Printf_Line(2, "DHT11 Error!    ");
-      // OLED_Printf_Line(3, "Code: %d        ", result);
-    }
     OLED_Refresh_Dirty();
     delay_ms(10);
   }
