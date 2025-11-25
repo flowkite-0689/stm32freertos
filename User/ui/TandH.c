@@ -31,10 +31,12 @@ void TandH()
  int16_t last_date_H=0;
   u8 key;
   u32 last_re_time= get_systick();
-  
+  int result = 1;
+       dhtdata.temp_int=25;
+   dhtdata.humi_int=30;
   while (1)
   {
-    int result = 0;
+    
     // 全局闹钟处理 - 在温湿度界面也能处理闹钟
     if (Alarm_GlobalHandler())
     {
@@ -77,6 +79,7 @@ void TandH()
     }
     else
     {
+     
       // OLED_Clear_Line(2);
       // OLED_Printf_Line(2, "DHT11 Error!    ");
       // OLED_Printf_Line(3, "Code: %d        ", result);

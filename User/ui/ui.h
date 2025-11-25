@@ -14,5 +14,5 @@
 #include "filesystem_test.h"
 #include "iwdg_test.h"
 #include "frid_test.h"
-
+#include "air_level.h"
 #endif

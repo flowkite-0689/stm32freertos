@@ -16,7 +16,7 @@
 #include "oled.h"
 #include "oled_print.h"
 #include "MPU6050.h"
-
+#include "air_level.h"
 
 /**
  * @brief 2048游戏主菜单函数

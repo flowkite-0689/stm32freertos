@@ -69,9 +69,12 @@
 
 #include "2048_oled.h"
 #include "oled_print.h"
+#include "air_level.h"  // 添加air_level.h以访问共享的info数组
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+
+// 不再在这里定义info数组，使用air_level.c中的定义
 
 #define SIZE 4
 
@@ -81,14 +84,7 @@
  */
 int board[SIZE][SIZE];
 
-/**
- * @brief 游戏信息存储数组
- * @details 存储游戏相关信息
- * info[0]: 方向信息 (left, right, up, down等)
- * info[1]: 角度信息 (倾斜角度显示)
- * info[2]: 游戏状态信息 (游戏结束等)
- */
-char *info[3] = {NULL, NULL, NULL};  // 初始化为NULL指针
+
 
 /**
  * @brief 游戏得分
@@ -103,32 +99,6 @@ int score = 0;
 int flagisgameover = 0;
 
 
-/**
- * @brief 初始化游戏信息数组
- * @details 为info数组的每个元素分配内存并初始化为空字符串
- */
-void init_info() {
-    for(int i = 0; i < 3; i++) {
-        if(info[i] != NULL) {
-            free(info[i]);
-        }
-        info[i] = malloc(16);  // 分配足够空间
-        strcpy(info[i], "");   // 初始化为空字符串
-    }
-}
-
-/**
- * @brief 清理游戏信息数组
- * @details 释放info数组分配的内存，避免内存泄漏
- */
-void cleanup_info() {
-    for(int i = 0; i < 3; i++) {
-        if(info[i] != NULL) {
-            free(info[i]);
-            info[i] = NULL;
-        }
-    }
-}
 
 /**
  * @brief 在棋盘的随机空位上添加新数字
@@ -426,141 +396,141 @@ int isGameover()
  * @param angle_y 计算出的绕X轴旋转角度(roll，左右倾斜)
  * @details 使用三角函数将三维加速度数据转换为二维倾斜角度
  */
-void calculate_tilt_angles(short ax, short ay, short az, float *angle_x, float *angle_y)
-{
-  // 计算倾斜角度
-  // angle_x: 绕Y轴旋转的pitch角度 (前后倾斜)
-  // angle_y: 绕X轴旋转的roll角度 (左右倾斜)
+// void calculate_tilt_angles(short ax, short ay, short az, float *angle_x, float *angle_y)
+// {
+//   // 计算倾斜角度
+//   // angle_x: 绕Y轴旋转的pitch角度 (前后倾斜)
+//   // angle_y: 绕X轴旋转的roll角度 (左右倾斜)
   
-  // 使用双精度浮点数计算以提高精度
-  double ax_d = (double)ax;
-  double ay_d = (double)ay;
-  double az_d = (double)az;
+//   // 使用双精度浮点数计算以提高精度
+//   double ax_d = (double)ax;
+//   double ay_d = (double)ay;
+//   double az_d = (double)az;
   
-  *angle_x = atan2(ax_d, sqrt(ay_d * ay_d + az_d * az_d)) * 180.0 / 3.14159265;
-  *angle_y = atan2(ay_d, sqrt(ax_d * ax_d + az_d * az_d)) * 180.0 / 3.14159265;
-}
+//   *angle_x = atan2(ax_d, sqrt(ay_d * ay_d + az_d * az_d)) * 180.0 / 3.14159265;
+//   *angle_y = atan2(ay_d, sqrt(ax_d * ax_d + az_d * az_d)) * 180.0 / 3.14159265;
+// }
 
 /**
  * @brief 基于MPU6050体感获取游戏移动方向
  * @return int 返回移动方向：0-左，1-右，2-上，3-下，-1表示无有效移动
  * @details 通过检测设备倾斜角度来确定游戏移动方向，支持方向趋势显示
  */
-int 
-getmove()
-{
-    short ax, ay, az;
-    static int last_direction = -1;
-    static int need_reset = 0;
-    int current_direction = -1;
-    float angle_x, angle_y;
+// int 
+// getmove()
+// {
+//     short ax, ay, az;
+//     static int last_direction = -1;
+//     static int need_reset = 0;
+//     int current_direction = -1;
+//     float angle_x, angle_y;
     
-    const float trigger_threshold = 20.0;
-    const float reset_threshold = 10.0;
+//     const float trigger_threshold = 20.0;
+//     const float reset_threshold = 10.0;
     
-    // 确保info数组已初始化
-    static int info_initialized = 0;
-    if(!info_initialized) {
-        init_info();
-        info_initialized = 1;
-    }
+//     // 确保info数组已初始化
+//     static int info_initialized = 0;
+//     if(!info_initialized) {
+//         init_info();
+//         info_initialized = 1;
+//     }
     
-    if (MPU_Get_Accelerometer(&ax, &ay, &az) == 0)
-    {
-        calculate_tilt_angles(ax, ay, az, &angle_x, &angle_y);
+//     if (MPU_Get_Accelerometer(&ax, &ay, &az) == 0)
+//     {
+//         calculate_tilt_angles(ax, ay, az, &angle_x, &angle_y);
         
-        char direction_text[10] = "neutral";  // 初始设为中性状态
-        float display_angle = 0;
+//         char direction_text[10] = "neutral";  // 初始设为中性状态
+//         float display_angle = 0;
         
-        if ((angle_x > 0 ? angle_x : -angle_x) > (angle_y > 0 ? angle_y : -angle_y))
-        {
-            display_angle = angle_x;
-            // 无论是否达到触发角度，都设置方向文本
-            if(angle_x < -trigger_threshold)
-            {
-                current_direction = 2;
-                strcpy(direction_text, "up   ");
-            }
-            else if(angle_x > trigger_threshold)
-            {
-                current_direction = 3;
-                strcpy(direction_text, "down ");
-            }
-            else
-            {
-                // 未达到触发角度，但显示倾斜趋势
-                current_direction = -1;
-                if(angle_x < -5.0) {
-                    strcpy(direction_text, "up~   ");  // 有向上倾斜趋势
-                } else if(angle_x > 5.0) {
-                    strcpy(direction_text, "down~"); // 有向下倾斜趋势
-                } else {
-                    strcpy(direction_text, "flat ");  // 接近水平
-                }
-            }
-        }
-        else
-        {
-            display_angle = angle_y;
-            // 无论是否达到触发角度，都设置方向文本
-            if(angle_y > trigger_threshold)
-            {
-                current_direction = 1;
-                strcpy(direction_text, "right");
-            }
-            else if(angle_y < -trigger_threshold)
-            {
-                current_direction = 0;
-                strcpy(direction_text, "left  ");
-            }
-            else
-            {
-                // 未达到触发角度，但显示倾斜趋势
-                current_direction = -1;
-                if(angle_y > 5.0) {
-                    strcpy(direction_text, "right~"); // 有向右倾斜趋势
-                } else if(angle_y < -5.0) {
-                    strcpy(direction_text, "left~  ");  // 有向左倾斜趋势
-                } else {
-                    strcpy(direction_text, "flat   ");  // 接近水平
-                }
-            }
-        }
+//         if ((angle_x > 0 ? angle_x : -angle_x) > (angle_y > 0 ? angle_y : -angle_y))
+//         {
+//             display_angle = angle_x;
+//             // 无论是否达到触发角度，都设置方向文本
+//             if(angle_x < -trigger_threshold)
+//             {
+//                 current_direction = 2;
+//                 strcpy(direction_text, "up   ");
+//             }
+//             else if(angle_x > trigger_threshold)
+//             {
+//                 current_direction = 3;
+//                 strcpy(direction_text, "down ");
+//             }
+//             else
+//             {
+//                 // 未达到触发角度，但显示倾斜趋势
+//                 current_direction = -1;
+//                 if(angle_x < -5.0) {
+//                     strcpy(direction_text, "up~   ");  // 有向上倾斜趋势
+//                 } else if(angle_x > 5.0) {
+//                     strcpy(direction_text, "down~"); // 有向下倾斜趋势
+//                 } else {
+//                     strcpy(direction_text, "flat ");  // 接近水平
+//                 }
+//             }
+//         }
+//         else
+//         {
+//             display_angle = angle_y;
+//             // 无论是否达到触发角度，都设置方向文本
+//             if(angle_y > trigger_threshold)
+//             {
+//                 current_direction = 1;
+//                 strcpy(direction_text, "right");
+//             }
+//             else if(angle_y < -trigger_threshold)
+//             {
+//                 current_direction = 0;
+//                 strcpy(direction_text, "left  ");
+//             }
+//             else
+//             {
+//                 // 未达到触发角度，但显示倾斜趋势
+//                 current_direction = -1;
+//                 if(angle_y > 5.0) {
+//                     strcpy(direction_text, "right~"); // 有向右倾斜趋势
+//                 } else if(angle_y < -5.0) {
+//                     strcpy(direction_text, "left~  ");  // 有向左倾斜趋势
+//                 } else {
+//                     strcpy(direction_text, "flat   ");  // 接近水平
+//                 }
+//             }
+//         }
         
-        // 安全地保存到info数组
-        if(info[0] != NULL) {
-            strncpy(info[0], direction_text, 15);
-            info[0][15] = '\0';
-        }
+//         // 安全地保存到info数组
+//         if(info[0] != NULL) {
+//             strncpy(info[0], direction_text, 15);
+//             info[0][15] = '\0';
+//         }
         
-        if(info[1] != NULL) {
-            snprintf(info[1], 16, " %.1f^     ", display_angle);  // 用'^'替代'°'符号
-        }
+//         if(info[1] != NULL) {
+//             snprintf(info[1], 16, " %.1f^     ", display_angle);  // 用'^'替代'°'符号
+//         }
         
-        // 检查是否需要重置
-        if(need_reset)
-        {
-            if((angle_x < reset_threshold && angle_x > -reset_threshold) && 
-               (angle_y < reset_threshold && angle_y > -reset_threshold))
-            {
-                need_reset = 0;
-                last_direction = -1;
-            }
-            else
-            {
-                return -1;
-            }
-        }
+//         // 检查是否需要重置
+//         if(need_reset)
+//         {
+//             if((angle_x < reset_threshold && angle_x > -reset_threshold) && 
+//                (angle_y < reset_threshold && angle_y > -reset_threshold))
+//             {
+//                 need_reset = 0;
+//                 last_direction = -1;
+//             }
+//             else
+//             {
+//                 return -1;
+//             }
+//         }
         
-        if(current_direction != -1 && !need_reset)
-        {
-            need_reset = 1;
-            return current_direction;
-        }
-    }
+//         if(current_direction != -1 && !need_reset)
+//         {
+//             need_reset = 1;
+//             return current_direction;
+//         }
+//     }
 
-    return -1;
-}
+//     return -1;
+// }
 
 // 游戏运行界面
 

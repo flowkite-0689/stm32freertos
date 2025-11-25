@@ -6,7 +6,8 @@ char *test_opt[] = {
     "2048_oled",
     "frid_test",
     // "filesystem_test",
-    "iwdg_test"};
+    "iwdg_test",
+   "air_level"};
 
 #define TOTAL_ITEMS (sizeof(test_opt) / sizeof(test_opt[0]))
 
@@ -70,6 +71,9 @@ void test_enter_select(u8 selected)
   //   break;
   case 3:
     iwdg_test();
+    break;
+    case 4: 
+    air_level_test();
     break;
   default:
     break;

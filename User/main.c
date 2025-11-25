@@ -271,6 +271,7 @@ int main()
 												g_RTC_Time.RTC_Minutes,
 												g_RTC_Time.RTC_Seconds);
 
+		
 		// ???????????
 		short ax, ay, az;
 		MPU_Get_Accelerometer(&ax, &ay, &az);
@@ -310,7 +311,9 @@ int main()
 		// printf("Current step: %ld\r\n", count);
 
 		OLED_Printf_Line(3, "step : %lu", count); // ????
-																							// ????
+		int timeofdaybeuse = (g_RTC_Time.RTC_Hours*60+g_RTC_Time.RTC_Minutes);
+    OLED_DrawProgressBar(0,44,125,2,timeofdaybeuse,0,24*60,0,1);
+		OLED_DrawProgressBar(125,0,2,64,g_RTC_Time.RTC_Seconds,0,60,0,1);														// ????
 		OLED_Refresh_Dirty();
 		delay_ms(150); // ???????????
 
