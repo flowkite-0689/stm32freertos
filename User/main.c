@@ -318,6 +318,10 @@ int main()
 		{
 			switch (key)
 			{
+
+				case KEY0_PRES:
+				TandH();
+				break;
 			case KEY3_PRES:
 				printf("cd menu\r\n");
 				cho = menu(cho);

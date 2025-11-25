@@ -139,3 +139,80 @@ void OLED_Display_Sensor(const char* sensor_name, float data1, float data2, cons
     // 第四行显示状态
     OLED_Printf_Line(3, "Status: Active");
 }
+// 横向温度计：显示在 line=1 (y=16~31)，纯方柱，无指针头
+void OLED_DrawTempBar_Line1(int16_t temp_tenth)  // 单位：0.1°C，如 255 = 25.5°C
+{
+    const uint8_t y_top = 16 + 2;     // 起始Y，留2像素边距
+    const uint8_t bar_height = 8;     // 进度条高度
+    const uint8_t x_start = 18;       // 左侧留空给 "0C"
+    const uint8_t x_end = 104;        // 右侧留空给 "50C"
+    const uint8_t bar_width = x_end - x_start; // 88 像素
+
+    // 温度范围：0.0°C ~ 50.0°C（可按需改为 -10~60）
+    const int16_t min_temp_tenth = 0;   // 0.0°C
+    const int16_t max_temp_tenth = 500; // 50.0°C
+    const int16_t range = max_temp_tenth - min_temp_tenth; // 500
+
+    // 限制范围
+    if (temp_tenth < min_temp_tenth) temp_tenth = min_temp_tenth;
+    if (temp_tenth > max_temp_tenth) temp_tenth = max_temp_tenth;
+
+    // 计算填充宽度（像素）
+    uint16_t fill_w = (uint32_t)(temp_tenth - min_temp_tenth) * bar_width / range;
+
+    // 清空本行
+    OLED_Clear_Line(1);
+
+    // ① 显示刻度标签
+    OLED_ShowString(0, 16, (uint8_t*)"0C", 12, 1);
+    OLED_ShowString(110, 16, (uint8_t*)"50C", 12, 1);
+
+    // ② 画外框（单像素线）
+    OLED_DrawLine(x_start, y_top, x_end, y_top, 1);              // 上
+    OLED_DrawLine(x_start, y_top + bar_height - 1, x_end, y_top + bar_height - 1, 1); // 下
+    OLED_DrawLine(x_start, y_top, x_start, y_top + bar_height - 1, 1); // 左
+    OLED_DrawLine(x_end, y_top, x_end, y_top + bar_height - 1, 1);     // 右
+
+    // ③ ✅ 纯方柱填充（实心矩形，无指针）
+    for (uint16_t x = x_start; x < x_start + fill_w && x < x_end; x++) {
+        for (uint8_t dy = 1; dy < bar_height - 1; dy++) { // 内部填充，避开边框
+            OLED_DrawPoint(x, y_top + dy, 1);
+        }
+    }
+
+    // 标记脏区域
+    OLED_Set_Dirty_Area(0, 16, 127, 31);
+}
+// 横向湿度条：显示在 line=3 (y=48~63)，纯方柱
+void OLED_DrawHumidityBar_Line3(uint8_t humi_percent)
+{
+    const uint8_t y_top = 48 + 4;     // 居中于 48~63
+    const uint8_t bar_height = 8;
+    const uint8_t x_start = 18;
+    const uint8_t x_end = 104;
+    const uint8_t bar_width = x_end - x_start;
+
+    if (humi_percent > 100) humi_percent = 100;
+    uint16_t fill_w = (uint32_t)humi_percent * bar_width / 100;
+
+    OLED_Clear_Line(3);
+
+    // ① 标签
+    OLED_ShowString(0, 48, (uint8_t*)"0%", 12, 1);
+    OLED_ShowString(106, 48, (uint8_t*)"100%", 12, 1);
+
+    // ② 外框
+    OLED_DrawLine(x_start, y_top, x_end, y_top, 1);
+    OLED_DrawLine(x_start, y_top + bar_height - 1, x_end, y_top + bar_height - 1, 1);
+    OLED_DrawLine(x_start, y_top, x_start, y_top + bar_height - 1, 1);
+    OLED_DrawLine(x_end, y_top, x_end, y_top + bar_height - 1, 1);
+
+    // ③ ✅ 纯方柱填充（实心，无指针）
+    for (uint16_t x = x_start; x < x_start + fill_w && x < x_end; x++) {
+        for (uint8_t dy = 1; dy < bar_height - 1; dy++) {
+            OLED_DrawPoint(x, y_top + dy, 1);
+        }
+    }
+
+    OLED_Set_Dirty_Area(0, 48, 127, 63);
+}
