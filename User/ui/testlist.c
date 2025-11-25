@@ -4,7 +4,7 @@
 char *test_opt[] = {
     "SPI_test",
     "2048_oled",
-    "light_test",
+    "frid_test",
     // "filesystem_test",
     "iwdg_test"};
 
@@ -61,6 +61,9 @@ void test_enter_select(u8 selected)
     break;
   case 1:
     menu_2048_oled();
+    break;
+    case 2:
+    frid_test();
     break;
   // case 3:
   //   filesystem_test();

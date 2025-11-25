@@ -13,6 +13,6 @@
 #include "2048_oled.h"
 #include "filesystem_test.h"
 #include "iwdg_test.h"
-
+#include "frid_test.h"
 
 #endif

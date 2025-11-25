@@ -10,6 +10,7 @@
 #include "oled_print.h"
 #include "uart_dma.h"
 #include "delay.h"
+#include "frid_test.h"
 
 void iwdg_test(void);
 #endif
