@@ -3,11 +3,6 @@
 #include <task.h>
 #include <hooks.h>
 
-
-
-
-
-
 #include "key.h"
 #include "oled.h"
 #include "oled_print.h"
@@ -187,37 +182,19 @@ u8 menu(u8 cho)
 	}
 }
 
-
-
-
 int main(void)
 {
 
-		LED_Init();
-		LED_Set_All(1);
+	LED_Init();
+	LED_Set_All(1);
 
-	/* 创建app_task1任务 */
-	xTaskCreate((TaskFunction_t)app_task1,			/* 任务入口函数 */
-				(const char *)"app_task1",			/* 任务名字 */
-				(uint16_t)512,						/* 任务栈大小 */
-				(void *)NULL,						/* 任务入口函数参数 */
-				(UBaseType_t)4,						/* 任务的优先级 */
-				(TaskHandle_t *)&app_task1_handle); /* 任务控制块指针 */
-	/* 创建app_task1任务 */
-	xTaskCreate((TaskFunction_t)app_task2,			/* 任务入口函数 */
-				(const char *)"app_task2",			/* 任务名字 */
-				(uint16_t)512,						/* 任务栈大小 */
-				(void *)NULL,						/* 任务入口函数参数 */
-				(UBaseType_t)4,						/* 任务的优先级 */
-				(TaskHandle_t *)&app_task2_handle); /* 任务控制块指针 */
-  	/* 创建app_main_task任务 */
-	xTaskCreate((TaskFunction_t)app_main_task,			/* 任务入口函数 */
-				(const char *)"app_main_task",			/* 任务名字 */
-				(uint16_t)2048,						/* 任务栈大小 - 增大栈空间 */
-				(void *)NULL,						/* 任务入口函数参数 */
-				(UBaseType_t)4,						/* 任务的优先级 */
-				(TaskHandle_t *)&app_main_task_handle); /* 任务控制块指针 */
-	
+	/* 创建app_main_task任务 */
+	xTaskCreate((TaskFunction_t)app_main_task,					/* 任务入口函数 */
+							(const char *)"app_main_task",					/* 任务名字 */
+							(uint16_t)2048,													/* 任务栈大小 - 增大栈空间 */
+							(void *)NULL,														/* 任务入口函数参数 */
+							(UBaseType_t)4,													/* 任务的优先级 */
+							(TaskHandle_t *)&app_main_task_handle); /* 任务控制块指针 */
 
 	/* 开启任务调度 */
 	vTaskStartScheduler();
@@ -225,38 +202,26 @@ int main(void)
 
 static void app_task1(void *pvParameters)
 {
-//  u32 time1=get_systick();
-// u32 time2 = time1;
-
-
-while (1)
+	while (1)
 	{
-		// if (get_systick()-time1>=2000)
-		// {
-			LED1=!LED1;
-		// 	time1 =get_systick();
-		// }
-		// if (get_systick()-time2>=3000	)
-		// {
-			
-		// 	time2=get_systick();
-		// }
-		
-		// 添加适当的任务延时，让出CPU给其他任务
+
+		LED1 = !LED1;
+
 		vTaskDelay(pdMS_TO_TICKS(2000)); // 延时10ms，避免占用过多CPU时间
 	}
-}static void app_task2(void *pvParameters)
+}
+static void app_task2(void *pvParameters)
 {
 	while (1)
 	{
-		LED2=!LED2;
+		LED2 = !LED2;
 		vTaskDelay(pdMS_TO_TICKS(3000));
 	}
-	
 }
 
 static void app_main_task(void *pvParameters)
-  {debug_init();
+{
+	debug_init();
 	printf("\ndebug init OK:");
 	printf("------------------------------------------------------>>\r\n");
 	KEY_Init();
@@ -311,7 +276,7 @@ static void app_main_task(void *pvParameters)
 	printf("<<----------------------------------------------system init OK!\r\n");
 
 	IWDG_Init();
-     while (1)
+	while (1)
 	{
 		// 全局闹钟处理 - 在任何界面都能处理闹钟
 		if (Alarm_GlobalHandler())
@@ -329,14 +294,17 @@ static void app_main_task(void *pvParameters)
 
 		// 只有真正到达00:00:00-00:00:30范围内才触发测试闹钟
 		if (g_RTC_Time.RTC_Hours == 0 && g_RTC_Time.RTC_Minutes == 0 &&
-		     g_RTC_Time.RTC_Seconds <= 30 &&
-		    !alarm_alert_active) {
+				g_RTC_Time.RTC_Seconds <= 30 &&
+				!alarm_alert_active)
+		{
 			// 确保真的到了00:00:00之后才触发（避免RTC时间同步问题）
 			static uint8_t trigger_flag = 0;
-			if (g_RTC_Time.RTC_Seconds == 0 || trigger_flag) {
-				if (!trigger_flag) {
+			if (g_RTC_Time.RTC_Seconds == 0 || trigger_flag)
+			{
+				if (!trigger_flag)
+				{
 					printf("Auto midnight alarm test triggered at %02d:%02d:%02d\r\n",
-					       g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
+								 g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
 					trigger_flag = 1;
 					Alarm_ForceTrigger();
 				}
@@ -388,7 +356,6 @@ static void app_main_task(void *pvParameters)
 			// printf("Movement: diff=%ld\r\n", accel_diff);
 		}
 
-		// ????????
 		// if (loop_counter % 10 == 0)
 		// {
 		// 	printf("Step: %ld\r\n", count);
@@ -397,9 +364,9 @@ static void app_main_task(void *pvParameters)
 		// printf("Current step: %ld\r\n", count);
 
 		OLED_Printf_Line(3, "step : %lu", count); // ????
-		int timeofdaybeuse = (g_RTC_Time.RTC_Hours*60+g_RTC_Time.RTC_Minutes);
-	  OLED_DrawProgressBar(0,44,125,2,timeofdaybeuse,0,24*60,0,1);
-		OLED_DrawProgressBar(125,0,2,64,g_RTC_Time.RTC_Seconds,0,60,0,1);														// ????
+		int timeofdaybeuse = (g_RTC_Time.RTC_Hours * 60 + g_RTC_Time.RTC_Minutes);
+		OLED_DrawProgressBar(0, 44, 125, 2, timeofdaybeuse, 0, 24 * 60, 0, 1);
+		OLED_DrawProgressBar(125, 0, 2, 64, g_RTC_Time.RTC_Seconds, 0, 60, 0, 1); // ????
 		OLED_Refresh_Dirty();
 		delay_ms(150); // ???????????
 
@@ -408,11 +375,11 @@ static void app_main_task(void *pvParameters)
 			switch (key)
 			{
 
-				case KEY0_PRES:
+			case KEY0_PRES:
 				TandH();
 				break;
-				case KEY1_PRES:
-				BEEP_Buzz(0,10);
+			case KEY1_PRES:
+				BEEP_Buzz(0, 10);
 				break;
 			case KEY3_PRES:
 				printf("cd menu\r\n");
@@ -420,15 +387,9 @@ static void app_main_task(void *pvParameters)
 				printf("out menu\r\n");
 				break;
 
-			// case KEY2_PRES:
-			// 	// 强制触发闹钟测试 (用于调试)
-			// 	printf("Manual alarm test triggered\r\n");
-			// 	Alarm_ForceTrigger();
-			// 	break;
-
 			default:
 				break;
 			}
 		}
 	}
-  }
+}
