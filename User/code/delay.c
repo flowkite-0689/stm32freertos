@@ -5,6 +5,27 @@
 __IO uint32_t TimingDelay = 0;        // 延时统计多少个10us
 __IO uint32_t Systick_count = 0;      // 统计系统运行时间单位ms
 
+// TIM6 微秒延时初始化
+static void TIM6_Delay_Init(void)
+{
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+    
+    // 使能TIM6时钟
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
+    
+    // 配置TIM6为1MHz计数频率（1us一个计数）
+    // TIM6时钟来源：APB1 = 84MHz (当APB1预分频不为1时，定时器时钟x2)
+    // 所以TIM6实际时钟为84MHz
+    TIM_TimeBaseStructure.TIM_Period = 0xFFFFFFFF;       // 最大计数值
+    TIM_TimeBaseStructure.TIM_Prescaler = 84 - 1;       // 84MHz/84 = 1MHz (1us计数一次)
+    TIM_TimeBaseStructure.TIM_ClockDivision = 0;       // 时钟分频
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; // 向上计数
+    TIM_TimeBaseInit(TIM6, &TIM_TimeBaseStructure);
+    
+    // 不使能定时器，在需要延时的时候再启动
+    TIM_Cmd(TIM6, DISABLE);
+}
+
 // SysTick中断服务函数定义在 stm32f4xx_it.c 中
 
 // 启动系统滴答定时器 SysTick, 10us中断一次 - RTOS兼容版本
@@ -32,6 +53,8 @@ void SysTick_Init(void)
     }
 }
 
+
+// 改为基本定时器
 // 延时函数单位us - RTOS兼容版本
 void delay_us(uint32_t us)
 {
@@ -97,15 +120,14 @@ uint32_t get_systick(void)
     }
 }
 
-// 不使用中断的微秒延时 - RTOS兼容版本
+// 不使用中断的微秒延时 - 使用TIM6实现
 void delay_us_no_irq(uint32_t us)
 {
+    static uint8_t tim6_initialized = 0;
+    
     // 如果FreeRTOS调度器已启动，使用RTOS安全的方式
     if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
     {
-        // 在RTOS中，我们不应该直接操作SysTick寄存器
-        // 因为FreeRTOS依赖SysTick进行任务调度
-        
         // 对于微秒级延时，如果延时足够长，转换为任务延时
         if (us >= 1000)
         {
@@ -113,28 +135,52 @@ void delay_us_no_irq(uint32_t us)
         }
         else
         {
-            // 对于短延时，使用自旋等待，但会短暂阻塞调度器
-            volatile uint32_t count = us * (SystemCoreClock / 1000000) / 4; // 粗略估算
-            while(count--);
+            // 对于短延时，使用TIM6定时器实现精确延时
+            if (!tim6_initialized)
+            {
+                TIM6_Delay_Init();
+                tim6_initialized = 1;
+            }
+            
+            // 设置计数器为0
+            TIM_SetCounter(TIM6, 0);
+            
+            // 启动TIM6
+            TIM_Cmd(TIM6, ENABLE);
+            
+            // 等待计数达到指定值
+            while (TIM_GetCounter(TIM6) < us)
+            {
+                // 空循环等待
+            }
+            
+            // 停止TIM6
+            TIM_Cmd(TIM6, DISABLE);
         }
     }
     else
     {
-        // 调度器未启动时，可以使用原来的方式
-        SysTick->CTRL = 0;
-        uint32_t ticks = us * (SystemCoreClock / 1000000);
-        
-        SysTick->LOAD = ticks - 1;
-        SysTick->VAL = 0UL;
-        SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |   // 设置系统定时器的时钟源为内核时钟AHBCLK=168M
-                        SysTick_CTRL_ENABLE_Msk;        // 使能定时器;
-        // / 等待计数完成
-        while (!(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk))
+        // 调度器未启动时，也使用TIM6实现精确延时
+        if (!tim6_initialized)
         {
+            TIM6_Delay_Init();
+            tim6_initialized = 1;
         }
         
-        //SysTick->CTRL = 0; // 不使用中断方法
-        SysTick_Init(); //恢复中断方法    
+        // 设置计数器为0
+        TIM_SetCounter(TIM6, 0);
+        
+        // 启动TIM6
+        TIM_Cmd(TIM6, ENABLE);
+        
+        // 等待计数达到指定值
+        while (TIM_GetCounter(TIM6) < us)
+        {
+            // 空循环等待
+        }
+        
+        // 停止TIM6
+        TIM_Cmd(TIM6, DISABLE);
     }
 }
 

@@ -13,6 +13,8 @@ void DHT11_Init(void)
 	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;  // 推挽输出 
 	GPIO_Init(GPIOG, &GPIO_InitStruct);
 	PGout(9) = 1;
+
+
 }
 
 

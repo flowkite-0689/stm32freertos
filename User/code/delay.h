@@ -7,6 +7,7 @@ extern __IO uint32_t TimingDelay;
 extern __IO uint32_t Systick_count;
 
 void SysTick_Init(void);
+void TIM6_Delay_Init(void);
 void delay_us(uint32_t us);
 void delay_ms(uint32_t ms);
 uint32_t get_systick(void);
