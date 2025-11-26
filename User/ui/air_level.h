@@ -10,8 +10,7 @@
 #include <stdio.h>
 void calculate_tilt_angles(short ax, short ay, short az, float *angle_x, float *angle_y);
 
-int 
-getmove();
+int getmove(void);
 /**
  * @brief 游戏信息存储数组
  * @details 存储游戏相关信息
@@ -24,5 +23,5 @@ extern float iiix;
 extern float iiiy;
 
 
-void air_level_test();
+void air_level_test(void);
 #endif

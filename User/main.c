@@ -22,6 +22,7 @@
 #include "simple_pedometer.h"
 #include <stdlib.h> // ????abs????????
 #include "iwdg.h"
+#include "beep.h"
 
 static TaskHandle_t app_task1_handle = NULL;
 static TaskHandle_t app_main_task_handle = NULL;
@@ -189,15 +190,9 @@ u8 menu(u8 cho)
 
 int main(void)
 {
-	GPIO_InitTypeDef GPIO_InitStruct;
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
-    GPIO_InitStruct.GPIO_Pin = GPIO_Pin_9;        // 选择要配置的引脚：PF9引脚
-    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;    // 设置引脚工作模式：输出模式
-    GPIO_InitStruct.GPIO_Speed = GPIO_High_Speed; // 设置输出速度：高速（通常为50MHz或100MHz）
-    GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;   // 设置输出类型：推挽输出（能输出高电平和低电平），输出模式时有用
-    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_UP;     // 设置上下拉电阻：上拉（引脚默认电平为高），输入模式时有用
-    GPIO_Init(GPIOF, &GPIO_InitStruct);
-    GPIO_ResetBits(GPIOF, GPIO_Pin_9);
+
+		LED_Init();
+		LED_Set_All(1);
 
 	/* 创建app_task1任务 */
 	xTaskCreate((TaskFunction_t)app_task1,			/* 任务入口函数 */
@@ -275,6 +270,7 @@ static void app_main_task(void *pvParameters)
 	u8 key;
 	u8 cho = 0;
 	unsigned long last_count = 0;
+	BEEP_Init();
 
 	// ???????????
 	static unsigned long loop_counter = 0;
@@ -386,7 +382,7 @@ static void app_main_task(void *pvParameters)
 				TandH();
 				break;
 				case KEY1_PRES:
-				frid_test();
+				BEEP_Buzz(0,20);
 				break;
 			case KEY3_PRES:
 				printf("cd menu\r\n");
