@@ -48,6 +48,7 @@ void TandH()
     {
         
     result = Read_DHT11(&dhtdata);
+      last_re_time=get_systick();
     }
     
 
