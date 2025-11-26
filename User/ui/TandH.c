@@ -32,8 +32,8 @@ void TandH()
   u8 key;
   u32 last_re_time= get_systick();
   int result = 1;
-       dhtdata.temp_int=25;
-   dhtdata.humi_int=30;
+       dhtdata.temp_int=50;
+   dhtdata.humi_int=100;
   while (1)
   {
     
@@ -91,23 +91,30 @@ void TandH()
       
      if (temp_tenth-last_date_T>=10)
      {
-        last_date_T+=10;
+        last_date_T+=5;
      }
      
         last_date_T++;
       
     }else if (temp_tenth  < last_date_T)
     {
-      last_date_T--;
+      
+        last_date_T-=17;
+    
     }
       OLED_DrawTempBar_Line1(last_date_T);
 
     if (dhtdata.humi_int>last_date_H )
     {
+      if (dhtdata.humi_int-last_date_H>=10)
+      {
+        last_date_H+=4;
+      }
+      
       last_date_H++;
     }else if (dhtdata.humi_int < last_date_H  )
     {
-      last_date_H--;
+      last_date_H-=3;
     }
     
 
