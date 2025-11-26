@@ -112,9 +112,9 @@ void UsageFault_Handler(void)
   * @param  None
   * @retval None
   */
-void SVC_Handler(void)
-{
-}
+//void SVC_Handler(void)
+//{
+//}
 
 /**
   * @brief  This function handles Debug Monitor exception.
@@ -130,9 +130,9 @@ void DebugMon_Handler(void)
   * @param  None
   * @retval None
   */
-void PendSV_Handler(void)
-{
-}
+//void PendSV_Handler(void)
+//{
+//}
 
 /**
   * @brief  This function handles SysTick Handler.
@@ -143,20 +143,20 @@ void PendSV_Handler(void)
   *         2. 累计Systick_count变量，用于记录毫秒数
   *         3. SysTick中断频率为100kHz（每10us触发一次）
   */
-void SysTick_Handler(void)
-{
-    static uint32_t i = 0;
-    
-    if (TimingDelay > 0)
-    {
-        TimingDelay--;
-    }
-    if(++i >= 1000 /10)  // 每100次中断为1ms
-    {
-        i = 0 ;
-        Systick_count++;
-    }
-}
+//void SysTick_Handler(void)
+//{
+//    static uint32_t i = 0;
+//    
+//    if (TimingDelay > 0)
+//    {
+//        TimingDelay--;
+//    }
+//    if(++i >= 1000 /10)  // 每100次中断为1ms
+//    {
+//        i = 0 ;
+//        Systick_count++;
+//    }
+//}
 
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
