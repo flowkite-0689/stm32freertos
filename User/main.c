@@ -29,6 +29,8 @@ static TaskHandle_t app_main_task_handle = NULL;
 static void app_task1(void *pvParameters);
 static void app_main_task(void *pvParameters);
 
+static TaskHandle_t app_task2_handle = NULL;
+static void app_task2(void *pvParameters);
 // 全局变量声明
 u8 key;
 u8 cho = 0;
@@ -220,8 +222,8 @@ static void app_task1(void *pvParameters)
 while (1)
 	{
 
-		GPIO_ToggleBits(GPIOF, GPIO_Pin_9);
-		vTaskDelay(1000);
+		LED1=!LED1;
+		vTaskDelay(2000);
 	}
 }
 
