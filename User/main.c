@@ -203,13 +203,19 @@ int main(void)
 				(void *)NULL,						/* 任务入口函数参数 */
 				(UBaseType_t)4,						/* 任务的优先级 */
 				(TaskHandle_t *)&app_task1_handle); /* 任务控制块指针 */
-
+	/* 创建app_task1任务 */
+	xTaskCreate((TaskFunction_t)app_task2,			/* 任务入口函数 */
+				(const char *)"app_task2",			/* 任务名字 */
+				(uint16_t)512,						/* 任务栈大小 */
+				(void *)NULL,						/* 任务入口函数参数 */
+				(UBaseType_t)4,						/* 任务的优先级 */
+				(TaskHandle_t *)&app_task2_handle); /* 任务控制块指针 */
   	/* 创建app_main_task任务 */
 	xTaskCreate((TaskFunction_t)app_main_task,			/* 任务入口函数 */
 				(const char *)"app_main_task",			/* 任务名字 */
 				(uint16_t)2048,						/* 任务栈大小 - 增大栈空间 */
 				(void *)NULL,						/* 任务入口函数参数 */
-				(UBaseType_t)3,						/* 任务的优先级 */
+				(UBaseType_t)4,						/* 任务的优先级 */
 				(TaskHandle_t *)&app_main_task_handle); /* 任务控制块指针 */
 	
 
@@ -219,12 +225,34 @@ int main(void)
 
 static void app_task1(void *pvParameters)
 {
+//  u32 time1=get_systick();
+// u32 time2 = time1;
+
+
 while (1)
 	{
-
-		LED1=!LED1;
-		vTaskDelay(2000);
+		// if (get_systick()-time1>=2000)
+		// {
+			LED1=!LED1;
+		// 	time1 =get_systick();
+		// }
+		// if (get_systick()-time2>=3000	)
+		// {
+			
+		// 	time2=get_systick();
+		// }
+		
+		// 添加适当的任务延时，让出CPU给其他任务
+		vTaskDelay(pdMS_TO_TICKS(2000)); // 延时10ms，避免占用过多CPU时间
 	}
+}static void app_task2(void *pvParameters)
+{
+	while (1)
+	{
+		LED2=!LED2;
+		vTaskDelay(pdMS_TO_TICKS(3000));
+	}
+	
 }
 
 static void app_main_task(void *pvParameters)

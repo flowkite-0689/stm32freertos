@@ -44,14 +44,14 @@ void TandH()
       continue; // 如果正在处理闹钟提醒，跳过温湿度循环的其他部分
     }
     IWDG_ReloadCounter();
-    if (get_systick()-last_re_time>=600)
+    if (get_systick()-last_re_time>=1000)
     {
-        
+        IWDG_ReloadCounter();
     result = Read_DHT11(&dhtdata);
       last_re_time=get_systick();
     }
     
-
+IWDG_ReloadCounter();
     if ((key = KEY_Get()) != 0)
     {
       if (key == KEY2_PRES)
