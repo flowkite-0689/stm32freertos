@@ -172,129 +172,129 @@ u8 menu(u8 cho)
 		}
 	}
 }
-// void index_main()
-// {
-// 	while (1)
-// 	{
-// 		// 全局闹钟处理 - 在任何界面都能处理闹钟
-// 		if (Alarm_GlobalHandler())
-// 		{
-// 			delay_ms(100); // 给闹钟显示留出时间
-// 			continue;			 // 如果正在处理闹钟提醒，跳过主循环的其他部分
-// 		}
+void index_main()
+{
+	while (1)
+	{
+		// 全局闹钟处理 - 在任何界面都能处理闹钟
+		if (Alarm_GlobalHandler())
+		{
+			delay_ms(100); // 给闹钟显示留出时间
+			continue;			 // 如果正在处理闹钟提醒，跳过主循环的其他部分
+		}
 
-// 		IWDG_ReloadCounter();
-// 		// 备用闹钟检查 - 防止中断失效
-// 		Alarm_Check();
+		IWDG_ReloadCounter();
+		// 备用闹钟检查 - 防止中断失效
+		Alarm_Check();
 
-// 		// 获取当前时间用于自动测试
-// 		RTC_Date_Get(); // 确保获取最新的RTC时间
+		// 获取当前时间用于自动测试
+		RTC_Date_Get(); // 确保获取最新的RTC时间
 
-// 		// 只有真正到达00:00:00-00:00:30范围内才触发测试闹钟
-// 		if (g_RTC_Time.RTC_Hours == 0 && g_RTC_Time.RTC_Minutes == 0 &&
-// 		     g_RTC_Time.RTC_Seconds <= 30 &&
-// 		    !alarm_alert_active) {
-// 			// 确保真的到了00:00:00之后才触发（避免RTC时间同步问题）
-// 			static uint8_t trigger_flag = 0;
-// 			if (g_RTC_Time.RTC_Seconds == 0 || trigger_flag) {
-// 				if (!trigger_flag) {
-// 					printf("Auto midnight alarm test triggered at %02d:%02d:%02d\r\n",
-// 					       g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
-// 					trigger_flag = 1;
-// 					Alarm_ForceTrigger();
-// 				}
-// 			}
-// 		}
+		// 只有真正到达00:00:00-00:00:30范围内才触发测试闹钟
+		if (g_RTC_Time.RTC_Hours == 0 && g_RTC_Time.RTC_Minutes == 0 &&
+		     g_RTC_Time.RTC_Seconds <= 30 &&
+		    !alarm_alert_active) {
+			// 确保真的到了00:00:00之后才触发（避免RTC时间同步问题）
+			static uint8_t trigger_flag = 0;
+			if (g_RTC_Time.RTC_Seconds == 0 || trigger_flag) {
+				if (!trigger_flag) {
+					printf("Auto midnight alarm test triggered at %02d:%02d:%02d\r\n",
+					       g_RTC_Time.RTC_Hours, g_RTC_Time.RTC_Minutes, g_RTC_Time.RTC_Seconds);
+					trigger_flag = 1;
+					Alarm_ForceTrigger();
+				}
+			}
+		}
 
-// 		// ??RTC??
-// 		RTC_Date_Get();
-// 		OLED_Printf_Line(0, "%02d/%02d/%02d     %s",
+		// ??RTC??
+		RTC_Date_Get();
+		OLED_Printf_Line(0, "%02d/%02d/%02d     %s",
 
-// 										 g_RTC_Date.RTC_Year + 2000,
-// 										 g_RTC_Date.RTC_Month,
-// 										 g_RTC_Date.RTC_Date,
-// 										 get_weekday_name(g_RTC_Date.RTC_WeekDay));
-// 		// 显示时间 32像素
+										 g_RTC_Date.RTC_Year + 2000,
+										 g_RTC_Date.RTC_Month,
+										 g_RTC_Date.RTC_Date,
+										 get_weekday_name(g_RTC_Date.RTC_WeekDay));
+		// 显示时间 32像素
 
-// 		OLED_Printf_Line_32(1, " %02d:%02d:%02d",
-// 												g_RTC_Time.RTC_Hours,
-// 												g_RTC_Time.RTC_Minutes,
-// 												g_RTC_Time.RTC_Seconds);
+		OLED_Printf_Line_32(1, " %02d:%02d:%02d",
+												g_RTC_Time.RTC_Hours,
+												g_RTC_Time.RTC_Minutes,
+												g_RTC_Time.RTC_Seconds);
 
-// 		// ???????????
-// 		short ax, ay, az;
-// 		MPU_Get_Accelerometer(&ax, &ay, &az);
+		// ???????????
+		short ax, ay, az;
+		MPU_Get_Accelerometer(&ax, &ay, &az);
 
-// 		// ???????
-// 		loop_counter++;
+		// ???????
+		loop_counter++;
 
-// 		// ?????????????????????
-// 		simple_pedometer_update(ax, ay, az);
-// 		unsigned long count = g_step_count;
+		// ?????????????????????
+		simple_pedometer_update(ax, ay, az);
+		unsigned long count = g_step_count;
 
-// 		// ??????
-// 		if (count != last_count)
-// 		{
-// 			// printf("!!! STEP DETECTED: %ld -> %ld !!!\r\n", last_count, count);
-// 			last_count = count;
-// 		}
+		// ??????
+		if (count != last_count)
+		{
+			// printf("!!! STEP DETECTED: %ld -> %ld !!!\r\n", last_count, count);
+			last_count = count;
+		}
 
-// 		// ??????
-// 		static short last_ax = 0, last_ay = 0, last_az = 0;
-// 		long accel_diff = abs(ax - last_ax) + abs(ay - last_ay) + abs(az - last_az);
-// 		last_ax = ax;
-// 		last_ay = ay;
-// 		last_az = az;
+		// ??????
+		static short last_ax = 0, last_ay = 0, last_az = 0;
+		long accel_diff = abs(ax - last_ax) + abs(ay - last_ay) + abs(az - last_az);
+		last_ax = ax;
+		last_ay = ay;
+		last_az = az;
 
-// 		if (accel_diff > 5000) // ????????
-// 		{
-// 			// printf("Movement: diff=%ld\r\n", accel_diff);
-// 		}
+		if (accel_diff > 5000) // ????????
+		{
+			// printf("Movement: diff=%ld\r\n", accel_diff);
+		}
 
-// 		// ????????
-// 		// if (loop_counter % 10 == 0)
-// 		// {
-// 		// 	printf("Step: %ld\r\n", count);
-// 		// }
+		// ????????
+		// if (loop_counter % 10 == 0)
+		// {
+		// 	printf("Step: %ld\r\n", count);
+		// }
 
-// 		// printf("Current step: %ld\r\n", count);
+		// printf("Current step: %ld\r\n", count);
 
-// 		OLED_Printf_Line(3, "step : %lu", count); // ????
-// 		int timeofdaybeuse = (g_RTC_Time.RTC_Hours*60+g_RTC_Time.RTC_Minutes);
-// 	  OLED_DrawProgressBar(0,44,125,2,timeofdaybeuse,0,24*60,0,1);
-// 		OLED_DrawProgressBar(125,0,2,64,g_RTC_Time.RTC_Seconds,0,60,0,1);														// ????
-// 		OLED_Refresh_Dirty();
-// 		delay_ms(150); // ???????????
+		OLED_Printf_Line(3, "step : %lu", count); // ????
+		int timeofdaybeuse = (g_RTC_Time.RTC_Hours*60+g_RTC_Time.RTC_Minutes);
+	  OLED_DrawProgressBar(0,44,125,2,timeofdaybeuse,0,24*60,0,1);
+		OLED_DrawProgressBar(125,0,2,64,g_RTC_Time.RTC_Seconds,0,60,0,1);														// ????
+		OLED_Refresh_Dirty();
+		delay_ms(150); // ???????????
 
-// 		if ((key = KEY_Get()) != 0)
-// 		{
-// 			switch (key)
-// 			{
+		if ((key = KEY_Get()) != 0)
+		{
+			switch (key)
+			{
 
-// 				case KEY0_PRES:
-// 				TandH();
-// 				break;
-// 				case KEY1_PRES:
-// 				frid_test();
-// 				break;
-// 			case KEY3_PRES:
-// 				printf("cd menu\r\n");
-// 				cho = menu(cho);
-// 				printf("out menu\r\n");
-// 				break;
+				case KEY0_PRES:
+				TandH();
+				break;
+				case KEY1_PRES:
+				frid_test();
+				break;
+			case KEY3_PRES:
+				printf("cd menu\r\n");
+				cho = menu(cho);
+				printf("out menu\r\n");
+				break;
 
-// 			// case KEY2_PRES:
-// 			// 	// 强制触发闹钟测试 (用于调试)
-// 			// 	printf("Manual alarm test triggered\r\n");
-// 			// 	Alarm_ForceTrigger();
-// 			// 	break;
+			// case KEY2_PRES:
+			// 	// 强制触发闹钟测试 (用于调试)
+			// 	printf("Manual alarm test triggered\r\n");
+			// 	Alarm_ForceTrigger();
+			// 	break;
 
-// 			default:
-// 				break;
-// 			}
-// 		}
-// 	}
-// }
+			default:
+				break;
+			}
+		}
+	}
+}
 void index_init()
 {
 
@@ -355,27 +355,8 @@ void index_init()
 }
 int main()
 {
+
   index_init();
+  index_main();
 
-	xTaskCreate((TaskFunction_t)app_task1,
-							(const char *)"app_task1",
-							(uint16_t)512,
-							(void *)NULL,
-							(UBaseType_t)4, 
-						(TaskHandle_t *)&app_task1_handle);
-
-					vTaskStartScheduler();
-
-				
-	
-}
-static void app_task1(void *pvParameters)
-{
-	while (1)
-	{
-		LED0 =!LED0;
-		vTaskDelay(1000);
-	}
-	
-	
 }
