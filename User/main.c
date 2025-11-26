@@ -412,7 +412,7 @@ static void app_main_task(void *pvParameters)
 				TandH();
 				break;
 				case KEY1_PRES:
-				BEEP_Buzz(0,20);
+				BEEP_Buzz(0,10);
 				break;
 			case KEY3_PRES:
 				printf("cd menu\r\n");
