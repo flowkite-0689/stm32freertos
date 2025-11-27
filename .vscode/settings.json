@@ -14,7 +14,8 @@
     "cstdlib": "c",
     "mpu6050.h": "c",
     "iwdg.h": "c",
-    "oled.h": "c"
+    "oled.h": "c",
+    "freertos.h": "c"
   },
   "cmake.sourceDirectory": "/mnt/d/codeStudy/c/stm32/study/demo/User/OLED/simulator"
 }
