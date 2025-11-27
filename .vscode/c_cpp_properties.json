@@ -7,6 +7,7 @@
                 "${workspaceFolder}/Libraries/CMSIS",
                 "${workspaceFolder}/Libraries/STM32F4xx_StdPeriph_Driver/inc",
                 "${workspaceFolder}/User",
+                "${workspaceFolder}/User/ui",
                 "${workspaceFolder}/User/FreeRTOS/include",
                 "${workspaceFolder}/User/FreeRTOS/portable/RVDS/ARM_CM4F"
             ],
