@@ -21,7 +21,7 @@ int getmove(void);
 extern char *info[3];  // 外部声明，不在这里初始化
 extern float iiix;
 extern float iiiy;
-
-
+void init_info(void);
+void cleanup_info(void);
 void air_level_test(void);
 #endif
