@@ -181,13 +181,18 @@ u8 menu(u8 cho)
 		}
 	}
 }
+  #define STACK_SIZE 200
+  StaticTask_t xTaskBuffer1;
+	StaticTask_t xTaskBuffer2;
+	  StackType_t xStack1[ STACK_SIZE ];
+		StackType_t xStack2[ STACK_SIZE ];
 
 int main(void)
 {
 
 	LED_Init();
 	LED_Set_All(1);
-
+TaskHandle_t xHandle = NULL;
 	/* 创建app_main_task任务 */
 	xTaskCreate((TaskFunction_t)app_main_task,					/* 任务入口函数 */
 							(const char *)"app_main_task",					/* 任务名字 */
@@ -196,6 +201,24 @@ int main(void)
 							(UBaseType_t)4,													/* 任务的优先级 */
 							(TaskHandle_t *)&app_main_task_handle); /* 任务控制块指针 */
 
+	/* Create the task without using any dynamic memory allocation. */
+	xHandle = xTaskCreateStatic(
+			app_task1,				/* Function that implements the task. */
+			"app_task1",						/* Text name for the task. */
+			STACK_SIZE,				/* Number of indexes in the xStack array. */
+			(void *)1,				/* Parameter passed into the task. */
+			tskIDLE_PRIORITY, /* Priority at which the task is created. */
+			xStack1,						/* Array to use as the task's stack. */
+			&xTaskBuffer1);		/* Variable to hold the task's data structure. */
+
+			xHandle = xTaskCreateStatic(
+			app_task2,				/* Function that implements the task. */
+			"app_task2",						/* Text name for the task. */
+			STACK_SIZE,				/* Number of indexes in the xStack array. */
+			(void *)1,				/* Parameter passed into the task. */
+			tskIDLE_PRIORITY, /* Priority at which the task is created. */
+			xStack2,						/* Array to use as the task's stack. */
+			&xTaskBuffer2);		/* Variable to hold the task's data structure. */
 	/* 开启任务调度 */
 	vTaskStartScheduler();
 }
