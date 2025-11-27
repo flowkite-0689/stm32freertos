@@ -176,7 +176,7 @@
 #endif
 
 #ifndef INCLUDE_vTaskSuspend
-    #define INCLUDE_vTaskSuspend    0
+    #define INCLUDE_vTaskSuspend    1
 #endif
 
 #ifdef INCLUDE_xTaskDelayUntil

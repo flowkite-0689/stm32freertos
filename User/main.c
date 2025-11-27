@@ -2,7 +2,6 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <hooks.h>
-
 #include "key.h"
 #include "oled.h"
 #include "oled_print.h"
@@ -10,12 +9,11 @@
 #include "soft_i2c.h"
 #include "logo.h"
 #include "ui.h"
-#include "ui/alarm_all.h"
-#include "rtc_date.h" // ????RTC????
+#include "rtc_date.h" 
 #include "MPU6050.h"
 #include "MPU6050/eMPL/inv_mpu_dmp_motion_driver.h"
 #include "simple_pedometer.h"
-#include <stdlib.h> // ????abs????????
+#include <stdlib.h> 
 #include "iwdg.h"
 #include "beep.h"
 
@@ -23,7 +21,7 @@ static TaskHandle_t app_task1_handle = NULL;
 static TaskHandle_t app_main_task_handle = NULL;
 static void app_task1(void *pvParameters);
 static void app_main_task(void *pvParameters);
-
+TaskHandle_t xHandle = NULL;
 static TaskHandle_t app_task2_handle = NULL;
 static void app_task2(void *pvParameters);
 // 全局变量声明
@@ -188,7 +186,7 @@ int main(void)
 
 	LED_Init();
 	LED_Set_All(1);
-TaskHandle_t xHandle = NULL;
+
 	/* 创建app_main_task任务 */
 	xTaskCreate((TaskFunction_t)app_main_task,					/* 任务入口函数 */
 							(const char *)"app_main_task",					/* 任务名字 */
@@ -352,7 +350,11 @@ static void app_main_task(void *pvParameters)
 				TandH();
 				break;
 			case KEY1_PRES:
+			 vTaskSuspend( xHandle );
 				BEEP_Buzz(0, 10);
+				break;
+				case KEY2_PRES:
+				vTaskResume( xHandle );
 				break;
 			case KEY3_PRES:
 				printf("cd menu\r\n");
