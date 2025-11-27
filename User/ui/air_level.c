@@ -1,4 +1,6 @@
 #include "air_level.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 // 定义全局共享信息数组
 char *info[3] = {NULL, NULL, NULL};
@@ -66,7 +68,7 @@ int
 getmove()
 {
     short ax, ay, az;
-    static int last_direction = -1;
+   
     static int need_reset = 0;
     int current_direction = -1;
     float angle_x, angle_y;
@@ -109,7 +111,7 @@ getmove()
                 current_direction = -1;
                 if(angle_x < -5.0) {
                     strcpy(direction_text, "up~   ");  // 有向上倾斜趋势
-                } else if(angle_x > 5.0) {
+                } else if(angle_x > 5.0f) {
                     strcpy(direction_text, "down~"); // 有向下倾斜趋势
                 } else {
                     strcpy(direction_text, "flat ");  // 接近水平
@@ -135,7 +137,7 @@ getmove()
             {
                 // 未达到触发角度，但显示倾斜趋势
                 current_direction = -1;
-                if(angle_y > 5.0) {
+                if(angle_y > 5.0f) {
                     strcpy(direction_text, "right~"); // 有向右倾斜趋势
                 } else if(angle_y < -5.0) {
                     strcpy(direction_text, "left~  ");  // 有向左倾斜趋势
@@ -162,7 +164,6 @@ getmove()
                (angle_y < reset_threshold && angle_y > -reset_threshold))
             {
                 need_reset = 0;
-                last_direction = -1;
             }
             else
             {

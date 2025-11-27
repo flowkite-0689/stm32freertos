@@ -449,13 +449,6 @@ void alarm_menu()
     delay_ms(10);
     while (1)
     {IWDG_ReloadCounter();
-        // 全局闹钟处理 - 在闹钟菜单界面也能处理闹钟
-        if (Alarm_GlobalHandler())
-        {
-            delay_ms(10);
-            continue; // 如果正在处理闹钟提醒，跳过闹钟菜单循环的其他部分
-        }
-
         delay_ms(10);
         if (flag_RE)
         {

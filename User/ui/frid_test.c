@@ -8,7 +8,7 @@ IWDG_ReloadCounter();
   OLED_Clear();
    OLED_Printf_Line(0,"RFID_demo_begin");
     OLED_Refresh_Dirty();
-  RFID_demo();
+ 
 
   OLED_Printf_Line(0,"RFID_demo_end");
 

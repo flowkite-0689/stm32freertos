@@ -5,9 +5,9 @@ char *test_opt[] = {
     "SPI_test",
     "2048_oled",
     "frid_test",
-    // "filesystem_test",
     "iwdg_test",
-   "air_level"};
+    "air_level"
+  };
 
 #define TOTAL_ITEMS (sizeof(test_opt) / sizeof(test_opt[0]))
 
@@ -36,7 +36,8 @@ void SPI_test()
   OLED_Refresh_Dirty();
   u8 key;
   while (1)
-  {IWDG_ReloadCounter();
+  {
+    IWDG_ReloadCounter();
     delay_ms(10);
     key = KEY_Get();
     if (key)
@@ -63,16 +64,13 @@ void test_enter_select(u8 selected)
   case 1:
     menu_2048_oled();
     break;
-    case 2:
+  case 2:
     frid_test();
     break;
-  // case 3:
-  //   filesystem_test();
-  //   break;
   case 3:
     iwdg_test();
     break;
-    case 4: 
+  case 4:
     air_level_test();
     break;
   default:
@@ -124,7 +122,8 @@ void testlist()
   u32 current_time = get_systick();
   u8 key;
   while (1)
-  {IWDG_ReloadCounter();
+  {
+    IWDG_ReloadCounter();
     delay_ms(10);
     if (flag_RE)
     {
@@ -143,7 +142,7 @@ void testlist()
         case KEY0_PRES:
           if (selected == 0)
           {
-            selected = TOTAL_ITEMS - 1; // 0?????????
+            selected = TOTAL_ITEMS - 1;
           }
           else
           {
@@ -164,7 +163,7 @@ void testlist()
         case KEY3_PRES:
           flag_RE = 1;
           OLED_Clear();
-          test_enter_select(selected); // ???????????????
+          test_enter_select(selected); 
           break;
 
         default:
