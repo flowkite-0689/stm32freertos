@@ -20,7 +20,7 @@ void stopwatch(void)
             continue; // 如果正在处理闹钟提醒，跳过秒表循环的其他部分
         }
         
-        if ((key = KEY_Get())) {
+        if ((key = KEY_Get())!=0) {
             printf("Key pressed: %d\n", key);  // 调试信息
             switch (key) {
                 case KEY0_PRES:  // 启动/继续
