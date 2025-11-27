@@ -64,8 +64,7 @@ void calculate_tilt_angles(short ax, short ay, short az, float *angle_x, float *
  * @return int 返回移动方向：0-左，1-右，2-上，3-下，-1表示无有效移动
  * @details 通过检测设备倾斜角度来确定游戏移动方向，支持方向趋势显示
  */
-int 
-getmove()
+int getmove()
 {
     short ax, ay, az;
    
