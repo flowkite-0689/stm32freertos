@@ -22,7 +22,6 @@ static TaskHandle_t app_main_task_handle = NULL;
 static void app_task1(void *pvParameters);
 static void app_main_task(void *pvParameters);
 TaskHandle_t xHandle = NULL;
-static TaskHandle_t app_task2_handle = NULL;
 static void app_task2(void *pvParameters);
 // 全局变量声明
 u8 key;
@@ -196,7 +195,7 @@ int main(void)
 							(TaskHandle_t *)&app_main_task_handle); /* 任务控制块指针 */
 
 	/* Create the task without using any dynamic memory allocation. */
-	xHandle = xTaskCreateStatic(
+	app_task1_handle = xTaskCreateStatic(
 			app_task1,				/* Function that implements the task. */
 			"app_task1",						/* Text name for the task. */
 			STACK_SIZE,				/* Number of indexes in the xStack array. */
@@ -351,10 +350,12 @@ static void app_main_task(void *pvParameters)
 				break;
 			case KEY1_PRES:
 			 vTaskSuspend( xHandle );
-				BEEP_Buzz(0, 10);
+			 vTaskSuspend( app_task1_handle );
+				BEEP_Buzz(0,1);
 				break;
 				case KEY2_PRES:
 				vTaskResume( xHandle );
+					vTaskResume( app_task1_handle );
 				break;
 			case KEY3_PRES:
 				printf("cd menu\r\n");
