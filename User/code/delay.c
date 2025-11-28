@@ -28,14 +28,12 @@ static void TIM6_Delay_Init(void)
 
 // SysTick中断服务函数定义在 stm32f4xx_it.c 中
 
-// 启动系统滴答定时器 SysTick, 10us中断一次 - RTOS兼容版本
 void SysTick_Init(void)
 {
     // 如果FreeRTOS调度器已启动，不需要初始化SysTick
     // 因为FreeRTOS会在vTaskStartScheduler()中自动配置SysTick
     if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
     {
-        // 在RTOS环境中，SysTick由FreeRTOS管理，不需要初始化
         return;
     }
     else
@@ -45,7 +43,6 @@ void SysTick_Init(void)
         // SystemCoreClock / 1000    1ms中断一次
         // SystemCoreClock / 100000  10us中断一次
         // SystemCoreClock / 1000000 1us中断一次
-        // 注意：中断一次的时间1us时，整个程序的重心都花在进出中断上了，根本没有时间处理其他的任务，因此不推荐
         if (SysTick_Config(SystemCoreClock / 100000)) {   // 1680
             /* Capture error */
             while (1);
@@ -110,7 +107,7 @@ uint32_t get_systick(void)
     // 如果FreeRTOS调度器已启动，使用FreeRTOS的tick计数
     if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
     {
-        // FreeRTOS的tick通常配置为1ms，所以可以直接使用
+        // FreeRTOS的tick通常配置为1ms，
         return xTaskGetTickCount();
     }
     else
@@ -120,12 +117,12 @@ uint32_t get_systick(void)
     }
 }
 
-// 不使用中断的微秒延时 - 使用TIM6实现
+// 不使用中断的微秒延时 
 void delay_us_no_irq(uint32_t us)
 {
     static uint8_t tim6_initialized = 0;
     
-    // 如果FreeRTOS调度器已启动，使用RTOS安全的方式
+    // 
     if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
     {
         // 对于微秒级延时，如果延时足够长，转换为任务延时
@@ -184,7 +181,7 @@ void delay_us_no_irq(uint32_t us)
     }
 }
 
-// 毫秒延时（无中断版本）- RTOS兼容版本
+// 毫秒延时
 void delay_ms_no_irq(uint32_t ms)
 {
     // 如果FreeRTOS调度器已启动，直接使用RTOS延时
