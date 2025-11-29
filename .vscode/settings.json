@@ -62,7 +62,8 @@
     "streambuf": "c",
     "cstdbool": "c",
     "typeinfo": "c",
-    "stdio.h": "c"
+    "stdio.h": "c",
+    "delay.h": "c"
   },
   "cmake.sourceDirectory": "/mnt/d/codeStudy/c/stm32/study/demo/User/OLED/simulator"
 }
