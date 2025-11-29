@@ -2,6 +2,8 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <hooks.h>
+#include <stdlib.h> 
+
 #include "key.h"
 #include "oled.h"
 #include "oled_print.h"
@@ -13,7 +15,6 @@
 #include "MPU6050.h"
 #include "MPU6050/eMPL/inv_mpu_dmp_motion_driver.h"
 #include "simple_pedometer.h"
-#include <stdlib.h> 
 #include "iwdg.h"
 #include "beep.h"
 
