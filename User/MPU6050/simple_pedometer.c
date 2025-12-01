@@ -37,7 +37,7 @@ void simple_pedometer_init(void)
     printf("Simple pedometer initialized with high sensitivity\r\n");
     
     // 加载保存的步数数据
-    Steps_Load();
+    // Steps_Load();
 }
 
 /**
@@ -119,7 +119,7 @@ unsigned long simple_pedometer_update(short ax, short ay, short az)
                 
                 // 每100步或达到特定步数时保存一次
                 if (g_step_count % 100 == 0) {
-                    Steps_Save();
+                    // Steps_Save();
                 }
             }
             pedometer.step_state = 0; // 回到等待波峰状态
@@ -153,5 +153,5 @@ void simple_pedometer_reset(void)
     printf("Simple pedometer reset\r\n");
     
     // 重置后立即保存
-    Steps_Save();
+    // Steps_Save();
 }

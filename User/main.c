@@ -7,7 +7,7 @@
 #include "key.h"
 #include "oled.h"
 #include "oled_print.h"
-#include "uart_dma.h"
+#include "debug.h"
 #include "soft_i2c.h"
 #include "logo.h"
 #include "ui.h"
@@ -83,7 +83,7 @@ u8 enter_select(u8 selected)
 		break;
 
 	case 5:
-		step(); // ????????
+		// step(); // ????????
 		break;
 	case 6:
 		testlist();
@@ -239,7 +239,9 @@ static void app_task2(void *pvParameters)
 static void app_main_task(void *pvParameters)
 {
 	debug_init();
+    taskENTER_CRITICAL();
 	printf("\ndebug init OK:");
+    taskEXIT_CRITICAL();
 	printf("------------------------------------------------------>>\r\n");
 	KEY_Init();
 	printf("key init OK\r\n");
@@ -278,7 +280,7 @@ static void app_main_task(void *pvParameters)
 
 	u8 key;
 	u8 cho = 0;
-	unsigned long last_count = 0;
+//	unsigned long last_count = 0;
 	BEEP_Init();
 
 	// ???????????
@@ -316,14 +318,14 @@ static void app_main_task(void *pvParameters)
 
 		// ?????????????????????
 		simple_pedometer_update(ax, ay, az);
-		unsigned long count = g_step_count;
+		// unsigned long count = g_step_count;
 
 		// ??????
-		if (count != last_count)
-		{
-			// printf("!!! STEP DETECTED: %ld -> %ld !!!\r\n", last_count, count);
-			last_count = count;
-		}
+		// if (count != last_count)
+		// {
+		// 	// printf("!!! STEP DETECTED: %ld -> %ld !!!\r\n", last_count, count);
+		// 	last_count = count;
+		// }
 
 		// ??????
 		static short last_ax = 0, last_ay = 0, last_az = 0;
@@ -334,7 +336,7 @@ static void app_main_task(void *pvParameters)
 
 	
 
-		OLED_Printf_Line(3, "step : %lu", count); // ????
+		// OLED_Printf_Line(3, "step : %lu", count); // ????
 		int timeofdaybeuse = (g_RTC_Time.RTC_Hours * 60 + g_RTC_Time.RTC_Minutes);
 		OLED_DrawProgressBar(0, 44, 125, 2, timeofdaybeuse, 0, 24 * 60, 0, 1);
 		OLED_DrawProgressBar(125, 0, 2, 64, g_RTC_Time.RTC_Seconds, 0, 60, 0, 1); // ????

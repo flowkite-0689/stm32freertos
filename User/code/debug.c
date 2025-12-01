@@ -1,241 +1,104 @@
-// ç§»æ¤åˆ°uart_dma.cä¸­ï¼Œä»¥ä¸‹å‡½æ•°è¢«æ³¨é‡Šæ‰ä»¥é¿å…å†²çª
-/*
 #include "debug.h"
-#include <stdio.h>
-#include <string.h>
-#include "led.h"
 
-static char usart_rx_buffer[USART_RX_BUFFER_SIZE];
-static uint16_t usart_rx_index = 0;
-static uint8_t command_ready = 0;
-static uint32_t rx_count = 0; // è®¡æ•°å™¨ï¼Œç”¨äºæµ‹è¯•ä¸­æ–­
-// USARTæ¥æ”¶ä¸­æ–­æœåŠ¡å‡½æ•°ï¼Œæ”¯æŒå­—ç¬¦ä¸²æ¥æ”¶
+//7£©ÔÚUSART½ÓÊÕÖĞ¶Ï·şÎñº¯ÊıÊµÏÖÊı¾İ½ÓÊÕºÍ·¢ËÍ¡£
 void USART1_IRQHandler(void)
-{
-    uint8_t temp = 0;
-    // åˆ¤æ–­æ¥æ”¶æ ‡å¿—ä½æ˜¯å¦ç½®1
-    if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
+{   
+    uint16_t  temp = 0;        
+    //ÅĞ¶Ï½ÓÊÕ±êÖ¾Î»ÊÇ·ñÖÃ1
+    if(USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
     {
-        USART_ClearITPendingBit(USART1, USART_IT_RXNE); // æ¸…é™¤æ¥æ”¶æ ‡å¿—ä½
-
-        temp = USART_ReceiveData(USART1); // è¯»å–æ•°æ®
-        rx_count++;                       // å¢åŠ æ¥æ”¶è®¡æ•°
-
-        // å¦‚æœæ˜¯å›è½¦æˆ–æ¢è¡Œï¼Œå‘½ä»¤ç»“æŸ
-        if (temp == '\r' || temp == '\n')
-        {
-            if (usart_rx_index > 0)
-            {
-                usart_rx_buffer[usart_rx_index] = '\0'; // å­—ç¬¦ä¸²ç»“æŸç¬¦
-                command_ready = 1;                      // æ ‡è®°å‘½ä»¤å‡†å¤‡å°±ç»ª
-                usart_rx_index = 0;                     // é‡ç½®ç´¢å¼•
-            }
-        }
-        // æ™®é€šå­—ç¬¦ï¼Œå­˜å…¥ç¼“å†²åŒº
-        else if (usart_rx_index < USART_RX_BUFFER_SIZE - 1)
-        {
-            usart_rx_buffer[usart_rx_index++] = temp;
-        }
+        USART_ClearITPendingBit(USART1, USART_IT_RXNE); //Çå³ı½ÓÊÕ±êÖ¾Î»
+        
+        temp = USART_ReceiveData(USART1);    // ¶ÁÈ¡Êı¾İ£¨¶ÁÒ»¸ö×Ö½Ú£©
+        // if (temp == '1')
+		// {
+		// 	GPIO_ToggleBits(GPIOF, GPIO_Pin_10);
+		// }
+	
+        USART_SendData(USART1, temp);        // ½«¶Áµ½µÄÊı¾İ·¢ËÍ»ØÈ¥
     }
 }
 
-// è·å–æ¥æ”¶è®¡æ•°
-uint32_t get_usart_rx_count(void)
-{
-    return rx_count;
-}
-
-// æ£€æŸ¥å‘½ä»¤æ˜¯å¦å‡†å¤‡å°±ç»ª
-uint8_t is_command_ready(void)
-{
-    return command_ready;
-}
-
-// æ£€æŸ¥æ˜¯å¦æœ‰å‘½ä»¤å‡†å¤‡å¥½
-uint8_t Usart1_Receive_String(char *buffer, uint16_t size)
-{
-    if (command_ready && buffer && size > 0)
-    {
-        uint16_t len = strlen(usart_rx_buffer);
-        if (len < size)
-        {
-            strcpy(buffer, usart_rx_buffer);
-            command_ready = 0; // æ¸…é™¤å‘½ä»¤å°±ç»ªæ ‡å¿—
-            memset(usart_rx_buffer, 0, USART_RX_BUFFER_SIZE);
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-// å¤„ç†ä¸²å£å‘½ä»¤
-void Process_Usart_Command(void)
-{
-    char cmd[64];
-    if (Usart1_Receive_String(cmd, sizeof(cmd)))
-    {
-        // è½¬æ¢ä¸ºå°å†™ä¾¿äºæ¯”è¾ƒ
-        for (int i = 0; cmd[i]; i++)
-        {
-            if (cmd[i] >= 'A' && cmd[i] <= 'Z')
-                cmd[i] = cmd[i] + 32;
-        }
-
-        // è§£æå‘½ä»¤
-        if (strcmp(cmd, "led0 on") == 0)
-        {
-            LED0 = 0;
-            Usart1_Send_String("LED0 ON\r\n");
-        }
-        else if (strcmp(cmd, "led0 off") == 0)
-        {
-            LED0 = 1;
-            Usart1_Send_String("LED0 OFF\r\n");
-        }
-        else if (strcmp(cmd, "led1 on") == 0)
-        {
-            LED1 = 0;
-            Usart1_Send_String("LED1 ON\r\n");
-        }
-        else if (strcmp(cmd, "led1 off") == 0)
-        {
-            LED1 = 1;
-            Usart1_Send_String("LED1 OFF\r\n");
-        }
-        else if (strcmp(cmd, "led2 on") == 0)
-        {
-            LED2 = 0;
-            Usart1_Send_String("LED2 ON\r\n");
-        }
-        else if (strcmp(cmd, "led2 off") == 0)
-        {
-            LED2 = 1;
-            Usart1_Send_String("LED2 OFF\r\n");
-        }
-        else if (strcmp(cmd, "led3 on") == 0)
-        {
-            LED3 = 0;
-            Usart1_Send_String("LED3 ON\r\n");
-        }
-        else if (strcmp(cmd, "led3 off") == 0)
-        {
-            LED3 = 1;
-            Usart1_Send_String("LED3 OFF\r\n");
-        }
-        else if (strcmp(cmd, "all on") == 0)
-        {
-            LED0 = LED1 = LED2 = LED3 = 0;
-            Usart1_Send_String("ALL LEDS ON\r\n");
-        }
-        else if (strcmp(cmd, "all off") == 0)
-        {
-            LED0 = LED1 = LED2 = LED3 = 1;
-            Usart1_Send_String("ALL LEDS OFF\r\n");
-        }
-        else if (strcmp(cmd, "help") == 0)
-        {
-            Usart1_Send_String("Commands:\r\n");
-            Usart1_Send_String("led0/1/2/3 on/off - Control individual LED\r\n");
-            Usart1_Send_String("all on/off - Control all LEDs\r\n");
-        }
-        else if (strcmp(cmd, "0c") == 0)
-        {
-            LED0 = !LED0;
-            Usart1_Send_String("LED0 change\r\n");
-        }
-        else if (strcmp(cmd, "1c") == 0)
-        {
-            LED1 = !LED1;
-            Usart1_Send_String("LED1 change\r\n");
-        }
-        else if (strcmp(cmd, "2c") == 0)
-        {
-            LED2 = !LED2;
-            Usart1_Send_String("LED2 change\r\n");
-        }
-        else if (strcmp(cmd, "3c") == 0)
-        {
-            LED3 = !LED3;
-            Usart1_Send_String("LED3 change\r\n");
-        }
-        else
-        {
-            // Usart1_Send_String("Unknown command. Type 'help'\r\n");
-        }
-    }
-}
-
+// PA9-TX, PA10-RX
 void debug_init(void)
 {
     GPIO_InitTypeDef GPIO_InitStruct;
     USART_InitTypeDef USART_InitStruct;
     NVIC_InitTypeDef NVIC_InitStruct;
+    
+    // 1£©Ê¹ÄÜRXºÍTXÒı½ÅGPIOÊ±ÖÓºÍUSARTÊ±ÖÓ£»
+    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);    // GPIOÊ±ÖÓ
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE); //for USART1 and USART6 
 
-    // 1ï¼‰ä½¿èƒ½RXå’ŒTXå¼•è„šGPIOæ—¶é’Ÿå’ŒUSARTæ—¶é’Ÿï¼›
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);  // GPIOæ—¶é’Ÿ
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE); // for USART1 and USART6
-
-    // 2ï¼‰åˆå§‹åŒ–GPIOï¼Œå¹¶å°†GPIOå¤ç”¨åˆ°USARTä¸Š
+    // 2£©³õÊ¼»¯GPIO£¬²¢½«GPIO¸´ÓÃµ½USARTÉÏ
     GPIO_InitStruct.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_10;
-    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;     // å¤ç”¨æ¨¡å¼
-    GPIO_InitStruct.GPIO_Speed = GPIO_High_Speed; // é«˜é€Ÿ
-    GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;   // è¾“å‡ºæ¨¡å¼æ—¶æœ‰ç”¨
-    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL; // æµ®ç©ºè¾“å…¥
+    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;      // ¸´ÓÃÄ£Ê½
+    GPIO_InitStruct.GPIO_Speed = GPIO_High_Speed; // ¸ßËÙ
+    GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;      // Êä³öÄ£Ê½Ê±ÓĞÓÃ
+    GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL; // ¸¡¿ÕÊäÈë
     GPIO_Init(GPIOA, &GPIO_InitStruct);
-
+    
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);
     GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);
 
-    // 3ï¼‰é…ç½®USARTå‚æ•°ï¼›
-    USART_InitStruct.USART_BaudRate = 115200;                                    // æ³¢ç‰¹ç‡
-    USART_InitStruct.USART_WordLength = USART_WordLength_8b;                     // 8ä½æœ‰æ•ˆæ•°æ®ä½
-    USART_InitStruct.USART_StopBits = USART_StopBits_1;                          // 1ä½åœæ­¢ä½
-    USART_InitStruct.USART_Parity = USART_Parity_No;                             // æ— æ ¡éªŒ
-    USART_InitStruct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;                 // æ¥æ”¶å’Œå‘é€æ•°æ®æ¨¡å¼
-    USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None; // æ— ç¡¬ä»¶æ§åˆ¶æµ
+    // 3£©ÅäÖÃUSART²ÎÊı£»
+    USART_InitStruct.USART_BaudRate = 115200;                        // ²¨ÌØÂÊ
+    USART_InitStruct.USART_WordLength = USART_WordLength_8b;        // 8Î»ÓĞĞ§Êı¾İÎ»
+    USART_InitStruct.USART_StopBits = USART_StopBits_1;              // 1Î»Í£Ö¹Î»
+    USART_InitStruct.USART_Parity = USART_Parity_No;                // ÎŞĞ£Ñé
+    USART_InitStruct.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;    // ½ÓÊÕºÍ·¢ËÍÊı¾İÄ£Ê½
+    USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None; // ÎŞÓ²¼ş¿ØÖÆÁ÷
     USART_Init(USART1, &USART_InitStruct);
 
-    // 4ï¼‰é…ç½®ä¸­æ–­æ§åˆ¶å™¨å¹¶ä½¿èƒ½USARTæ¥æ”¶ä¸­æ–­
+    // 4£©ÅäÖÃÖĞ¶Ï¿ØÖÆÆ÷²¢Ê¹ÄÜUSART½ÓÊÕÖĞ¶Ï
     USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
 
-    // 5ï¼‰è®¾ç½®ä¸­æ–­ä¼˜å…ˆçº§ï¼ˆå¦‚æœéœ€è¦å¼€å¯ä¸²å£ä¸­æ–­æ‰éœ€è¦è¿™ä¸ªæ­¥éª¤ï¼‰
-    NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn; // ä¸­æ–­é€šé“(ä¸­æ–­æº)
-    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 1;
-    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 2;
+    // 5£©ÉèÖÃÖĞ¶ÏÓÅÏÈ¼¶£¨Èç¹ûĞèÒª¿ªÆô´®¿ÚÖĞ¶Ï²ÅĞèÒªÕâ¸ö²½Öè£©
+    NVIC_InitStruct.NVIC_IRQChannel = USART1_IRQn;         // ÖĞ¶ÏÍ¨µÀ(ÖĞ¶ÏÔ´)
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 6;
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 0;
     NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStruct);
-
-    // 6ï¼‰ä½¿èƒ½USARTï¼›
+    
+    // 6£©Ê¹ÄÜUSART£»
     USART_Cmd(USART1, ENABLE);
 }
 
-// é€šè¿‡ä¸²å£1ï¼Œå•ç‰‡æœºå‘é€å­—ç¬¦ä¸²
-void Usart1_Send_String(char *string)
+// Í¨¹ı´®¿Ú1£¬µ¥Æ¬»ú·¢ËÍ×Ö·û´®
+void Usart1_Send_Sring(char *string)
 {
-
-    while (*string != '\0')
+    
+    while(*string != '\0')
     {
-        USART_SendData(USART1, *string++);
-        // ç­‰å¾…å‘é€æ•°æ®å¯„å­˜å™¨ç©º
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-            ;
+        USART_SendData(USART1, *string++);	// ¿âº¯Êı
+        // µÈ´ı·¢ËÍÊı¾İ¼Ä´æÆ÷¿Õ
+        while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
     }
-    // ç­‰å¾…å‘é€å®Œæˆ
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
-        ;
+    // µÈ´ı·¢ËÍÍê³É
+    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
 }
 
-// é‡å®šå‘cåº“å‡½æ•°printfåˆ°ä¸²å£ï¼Œé‡å®šå‘åå¯ä½¿ç”¨printfå‡½æ•°
+// Í¨¹ı´®¿Ú1£¬µ¥Æ¬»ú·¢ËÍ×Ö·û´®
+void Usart1_send_bytes(uint8_t *buf, uint32_t len)
+{
+    while(len--)
+    {
+        USART_SendData(USART1, *buf++);	// ¿âº¯Êı
+        // µÈ´ı·¢ËÍÊı¾İ¼Ä´æÆ÷¿Õ
+        while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+    }
+    // µÈ´ı·¢ËÍÍê³É
+    while(USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET);
+}
+
+//ÖØ¶¨Ïòc¿âº¯Êıprintfµ½´®¿Ú£¬ÖØ¶¨Ïòºó¿ÉÊ¹ÓÃprintfº¯Êı
 int fputc(int ch, FILE *f)
 {
-    // å‘é€ä¸€ä¸ªå­—èŠ‚æ•°æ®åˆ°ä¸²å£
-    USART_SendData(USART1, (uint8_t)ch);
+    /* ·¢ËÍÒ»¸ö×Ö½ÚÊı¾İµ½´®¿Ú */
+    USART_SendData(USART1, (uint8_t) ch);
 
-    // ç­‰å¾…å‘é€å®Œæ¯•
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-        ;
+    /* µÈ´ı·¢ËÍÍê±Ï */
+    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
 
     return (ch);
 }
-*/

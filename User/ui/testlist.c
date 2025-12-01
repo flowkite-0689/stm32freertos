@@ -65,7 +65,7 @@ void test_enter_select(u8 selected)
     menu_2048_oled();
     break;
   case 2:
-    frid_test();
+    // frid_test();
     break;
   case 3:
     iwdg_test();
