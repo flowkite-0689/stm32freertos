@@ -1,374 +1,175 @@
-#include <stm32f4xx.h>
-#include <FreeRTOS.h>
-#include <task.h>
-#include <hooks.h>
-#include <stdlib.h> 
-
-#include "key.h"
-#include "oled.h"
-#include "oled_print.h"
+#include "stm32f4xx.h"
+#include "FreeRTOS.h"
+#include "task.h"
+#include "semphr.h"
 #include "debug.h"
-#include "soft_i2c.h"
-#include "logo.h"
-#include "ui.h"
-#include "rtc_date.h" 
-#include "MPU6050.h"
-#include "MPU6050/eMPL/inv_mpu_dmp_motion_driver.h"
-#include "simple_pedometer.h"
-#include "iwdg.h"
-#include "beep.h"
+#include "led.h"
+#include "sys.h"
+#include "event_groups.h"
+#include "timers.h"
+#include "hooks.h"
+#include <string.h>
+QueueHandle_t xDataQueue;
+static TaskHandle_t app_task_handle = NULL;
+static TaskHandle_t LED_handle = NULL;
 
-static TaskHandle_t app_task1_handle = NULL;
-static TaskHandle_t app_main_task_handle = NULL;
-static void app_task1(void *pvParameters);
-static void app_main_task(void *pvParameters);
-TaskHandle_t xHandle = NULL;
-static void app_task2(void *pvParameters);
-// 全局变量声明
-u8 key;
-u8 cho = 0;
-unsigned long loop_counter = 0;
-unsigned long last_count = 0;
+/* 任务1 */
+static void app_task(void *pvParameters);
+static void LED_task(void *pvParameters);
 
-// ????????
-#define options_NUM 7
+static TimerHandle_t xTimers[2] = {0}; /* 定时器句柄 */
 
-/**
- * @brief ???????????
- * @param weekday ???????1-7??1=???????
- * @return ?????????????
- */
-static const char *get_weekday_name(u8 weekday)
-{
-	static const char *weekday_names[] = {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"};
-	if (weekday >= 1 && weekday <= 7)
-	{
-		return weekday_names[weekday - 1];
-	}
-	return "---";
-}
-
-// ????????
-const unsigned char *options[] =
-		{
-				gImage_stopwatch,
-				gImage_setting,
-				gImage_TandH,
-				gImage_flashlight,
-				gImage_bell,
-				gImage_step,
-				gImage_test
-
-};
-
-u8 enter_select(u8 selected)
-{
-	switch (selected)
-	{
-	case 0:
-		stopwatch();
-		break;
-	case 1:
-		setting();
-		break;
-	case 2:
-		TandH();
-
-		break;
-	case 3:
-		flashlight();
-		break;
-	case 4:
-		alarm_menu();
-		break;
-
-	case 5:
-		// step(); // ????????
-		break;
-	case 6:
-		testlist();
-		break;
-	default:
-		break;
-	}
-	return selected;
-}
-
-void menu_Refresh(u8 selected)
-{
-	u8 left;
-	if (selected == 0)
-	{
-		left = options_NUM - 1;
-	}
-	else
-	{
-		left = selected - 1;
-	}
-
-	u8 right = ((selected + 1) % options_NUM);
-
-	OLED_ShowPicture(0, 16, 32, 32, options[left], 1);
-	OLED_ShowPicture(48, 16, 32, 32, options[selected], 0);
-	OLED_ShowPicture(96, 16, 32, 32, options[right], 1);
-	OLED_Refresh();
-}
-// ?????????????????????????��??��???
-u8 menu(u8 cho)
-{
-
-	delay_ms(10);
-	u8 flag_RE = 1;
-	u8 selected = cho;
-	u32 current_time = get_systick();
-	u8 key;
-	while (1)
-	{
-		delay_ms(10);
-		IWDG_ReloadCounter();
-		
-
-		if (flag_RE)
-		{
-			OLED_Clear();
-			menu_Refresh(selected);
-			current_time = get_systick();
-			flag_RE = 0;
-		}
-
-		if ((key = KEY_Get()) != 0)
-		{
-			if (get_systick() - current_time > 500)
-			{
-				switch (key)
-				{
-				case KEY0_PRES:
-					if (selected == 0)
-					{
-						selected = options_NUM - 1; // 0?????????
-					}
-					else
-					{
-						selected--;
-					}
-					menu_Refresh(selected);
-
-					break;
-				case KEY1_PRES:
-					selected++;
-					selected = selected % options_NUM;
-					menu_Refresh(selected);
-					break;
-				case KEY2_PRES:
-					OLED_Clear();
-					return selected;
-
-				case KEY3_PRES:
-					flag_RE = 1;
-					selected = enter_select(selected); // ???????????????
-					break;
-
-				default:
-					break;
-				}
-			}
-		}
-	}
-}
-  #define STACK_SIZE 200
-  StaticTask_t xTaskBuffer1;
-	StaticTask_t xTaskBuffer2;
-	  StackType_t xStack1[ STACK_SIZE ];
-		StackType_t xStack2[ STACK_SIZE ];
+void vTimerCallback(TimerHandle_t pxTimer); // 定时器回调函数
+static void data_task(void *pvParameters);
+TaskHandle_t Handle_data;
 
 int main(void)
 {
+    BaseType_t xReturn;
+    // NVIC 分组4
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4); // 优先级分组,freeRTOS中优先级分组不能在任务创建后修改
+    debug_init();
+    LED_Init();
+    LED_Set_All(1); // 全部熄灭
 
-	LED_Init();
-	LED_Set_All(1);
+    xDataQueue = xQueueCreate(10, sizeof(uint8_t));
+    printf("main:%p", xDataQueue);
+    xTaskCreate(data_task,
+                "data_task",
+                512,
+                (void *)&xDataQueue,
+                1,
+                &Handle_data);
 
-	/* 创建app_main_task任务 */
-	xTaskCreate((TaskFunction_t)app_main_task,					/* 任务入口函数 */
-							(const char *)"app_main_task",					/* 任务名字 */
-							(uint16_t)2048,													/* 任务栈大小 - 增大栈空间 */
-							(void *)NULL,														/* 任务入口函数参数 */
-							(UBaseType_t)4,													/* 任务的优先级 */
-							(TaskHandle_t *)&app_main_task_handle); /* 任务控制块指针 */
-
-	/* Create the task without using any dynamic memory allocation. */
-	app_task1_handle = xTaskCreateStatic(
-			app_task1,				/* Function that implements the task. */
-			"app_task1",						/* Text name for the task. */
-			STACK_SIZE,				/* Number of indexes in the xStack array. */
-			(void *)1,				/* Parameter passed into the task. */
-			tskIDLE_PRIORITY, /* Priority at which the task is created. */
-			xStack1,						/* Array to use as the task's stack. */
-			&xTaskBuffer1);		/* Variable to hold the task's data structure. */
-
-			xHandle = xTaskCreateStatic(
-			app_task2,				/* Function that implements the task. */
-			"app_task2",						/* Text name for the task. */
-			STACK_SIZE,				/* Number of indexes in the xStack array. */
-			(void *)1,				/* Parameter passed into the task. */
-			tskIDLE_PRIORITY, /* Priority at which the task is created. */
-			xStack2,						/* Array to use as the task's stack. */
-			&xTaskBuffer2);		/* Variable to hold the task's data structure. */
-	/* 开启任务调度 */
-	vTaskStartScheduler();
+    //     /* 创建app_task任务 */
+    //     xReturn = xTaskCreate((TaskFunction_t)app_task,          /* 任务入口函数 */
+    //                           (const char *)"app_task",          /* 任务名字 */
+    //                           (uint16_t)512,                     /* 任务栈大小 */
+    //                           (void *)NULL,                      /* 任务入口函数参数 */
+    //                           (UBaseType_t)4,                    /* 任务的优先级 */
+    //                           (TaskHandle_t *)&app_task_handle); /* 任务控制块指针 */
+    // if (xReturn != pdPASS)
+    // {
+    //     printf("create app_task failed!\r\n");
+    //     return 0;
+    // }
+    /* 开启任务调度 */
+    vTaskStartScheduler();
 }
 
-static void app_task1(void *pvParameters)
+static void app_task(void *pvParameters)
 {
-	while (1)
-	{
+    taskENTER_CRITICAL(); // 进入临界区
+    /***创建定时器***/
+    xTimers[0] = xTimerCreate("Timer1",            // 软件定时器名字，文本形式，纯粹是为了调试
+                              pdMS_TO_TICKS(1000), // 软件定时器的周期，单位为系统节拍周期（即tick）
+                              pdTRUE,              // pdTRUE:周期模式，否则运行一次
+                              (void *)0,           // 软件定时器ID，数字形式。1,为每个计时器分配一个索引的唯一ID .该ID 典型的用法是当一个回调函数分配给一个或者多个软件定时器时，在回调函数里面根据ID 号来处理不同的软件定时器。
+                              vTimerCallback);     // 软件定时器的回调函数
 
-		LED1 = !LED1;
-
-		vTaskDelay(pdMS_TO_TICKS(2000)); // 延时10ms，避免占用过多CPU时间
-	}
-}
-static void app_task2(void *pvParameters)
-{
-	while (1)
-	{
-		LED2 = !LED2;
-		vTaskDelay(pdMS_TO_TICKS(3000));
-	}
-}
-
-static void app_main_task(void *pvParameters)
-{
-	debug_init();
-    taskENTER_CRITICAL();
-	printf("\ndebug init OK:");
+    xTimers[1] = xTimerCreate("Timer2",            // 软件定时器名字，文本形式，纯粹是为了调试
+                              pdMS_TO_TICKS(1000), // 软件定时器的周期，单位为系统节拍周期（即tick）
+                              pdFALSE,             // pdTRUE:周期模式，否则运行一次
+                              (void *)1,           // 软件定时器ID，数字形式。该ID 典型的用法是当一个回调函数分配给一个或者多个软件定时器时，在回调函数里面根据ID 号来处理不同的软件定时器。
+                              vTimerCallback);     // 软件定时器的回调函数
+    if (xTimerStart(xTimers[0], 0) != pdPASS)      // 开始定时器命令,立即启动定时器
+    {
+        // The timer could not be set into the Active state.
+    }
+    if (xTimerStart(xTimers[1], 0) != pdPASS) // 开始定时器命令,立即启动定时器
+    {
+        // The timer could not be set into the Active state.
+    }
+    xTaskCreate((TaskFunction_t)LED_task,     /* 任务入口函数 */
+                (const char *)"LED_task",     /* 任务名字 */
+                (uint16_t)512,                /* 任务栈大小 */
+                (void *)NULL,                 /* 任务入口函数参数 */
+                (UBaseType_t)4,               /* 任务的优先级 */
+                (TaskHandle_t *)&LED_handle); /* 任务控制块指针 */
+    vTaskDelete(NULL);                        // 删除自身
     taskEXIT_CRITICAL();
-	printf("------------------------------------------------------>>\r\n");
-	KEY_Init();
-	printf("key init OK\r\n");
-	OLED_Init();
+}
 
-	OLED_ShowPicture(32, 0, 64, 64, gImage_bg, 1);
-	// 初始化RTC
-	RTC_Date_Init();
+static void LED_task(void *pvParameters)
+{
+    while (1)
+    {
+        GPIO_ToggleBits(GPIOF, GPIO_Pin_9);
+        vTaskDelay(1000);
+    }
+}
 
-	OLED_Refresh(); // ????
-	printf("\r\n");
-	MPU_Init();
+/**
+ * @brief 定时器回调函数
+ *
+ * @param pxTimer 回调时定时器的句柄
+ */
+void vTimerCallback(TimerHandle_t pxTimer)
+{
+    static portCHAR lExpireCounters = 0; // 记录定时器回调次数
+    int32_t lArrayIndex = 0;
 
-	// ??MPU6050??ID
-	u8 device_id;
-	MPU_Read_Byte(MPU_ADDR, MPU_DEVICE_ID_REG, &device_id);
-	printf("MPU6050 Device ID: 0x%02X (Expected: 0x68)\r\n", device_id);
+    // Which timer expired?
+    // 通过pvTimerGetTimerID()函数获取定时器ID
+    lArrayIndex = (int32_t)pvTimerGetTimerID(pxTimer);
 
-	if (device_id != MPU_ADDR)
-	{
-		printf("MPU6050 Device ID Mismatch!\r\n");
-		OLED_Printf_Line(1, "MPU ID Error!");
-		OLED_Refresh();
-		delay_ms(2000);
-	}
-	else
-	{
-		printf("MPU6050 Device ID OK\r\n");
-	}
+    switch (lArrayIndex)
+    {
+    case 0:
+        lExpireCounters++;
+        printf("xTimers1 callback\r\n");
+        if (lExpireCounters == 10)
+        {
+            printf("xTimers1 stop\r\n");
+            xTimerStop(pxTimer, 0); // 回调10次后，关闭定时器
+            vTaskSuspend(LED_handle);
+        }
+        break;
+    case 1:
+        printf("xTimers2 callback\r\n");
+        break;
 
-	// ????????
-	simple_pedometer_init();
+    default:
+        break;
+    }
+}
+static void data_task(void *pvParameters)
+{
+    uint8_t buffer[50] = {0};
+   
+    while (1)
+    {
+        uint8_t ch;
+        uint8_t index = 0;
+        
+        while (1)
+        {
+             xQueueReceive(xDataQueue, &ch, portMAX_DELAY);
+            
+            printf("%c",ch);
+             if (index < sizeof(buffer) - 1)
+        {
+            buffer[index++] = ch;
+            buffer[index]='\0';
+        }
+        if(ch=='\n')
+        {
+            break;
+        }
+        }
+        
+       
+         if (strstr((char *)buffer, "hello"))
+        {
+            LED1 = !LED1;
+        }
+        if (strstr((char *)buffer, "world"))
+        {
+            LED2 = !LED2;
+        }
+        //清空buffer
 
-	// ????????????DMP????????????????
-	SPI1_Init();
 
-	u8 key;
-	u8 cho = 0;
-//	unsigned long last_count = 0;
-	BEEP_Init();
-
-	// ???????????
-	static unsigned long loop_counter = 0;
-	OLED_Clear();
-
-	// RTC_SetTime_Manual(23, 59, 57);
-	printf("\r\n");
-	printf("<<----------------------------------------------system init OK!\r\n");
-
-	IWDG_Init();
-	while (1)
-	{
-		IWDG_ReloadCounter();
-		// ??RTC??
-		RTC_Date_Get();
-		OLED_Printf_Line(0, "%02d/%02d/%02d     %s",
-
-										 g_RTC_Date.RTC_Year + 2000,
-										 g_RTC_Date.RTC_Month,
-										 g_RTC_Date.RTC_Date,
-										 get_weekday_name(g_RTC_Date.RTC_WeekDay));
-		// 显示时间 32像素
-
-		OLED_Printf_Line_32(1, " %02d:%02d:%02d",
-												g_RTC_Time.RTC_Hours,
-												g_RTC_Time.RTC_Minutes,
-												g_RTC_Time.RTC_Seconds);
-
-		short ax, ay, az;
-		MPU_Get_Accelerometer(&ax, &ay, &az);
-
-		// ???????
-		loop_counter++;
-
-		// ?????????????????????
-		simple_pedometer_update(ax, ay, az);
-		// unsigned long count = g_step_count;
-
-		// ??????
-		// if (count != last_count)
-		// {
-		// 	// printf("!!! STEP DETECTED: %ld -> %ld !!!\r\n", last_count, count);
-		// 	last_count = count;
-		// }
-
-		// ??????
-		static short last_ax = 0, last_ay = 0, last_az = 0;
-		long accel_diff = abs(ax - last_ax) + abs(ay - last_ay) + abs(az - last_az);
-		last_ax = ax;
-		last_ay = ay;
-		last_az = az;
-
-	
-
-		// OLED_Printf_Line(3, "step : %lu", count); // ????
-		int timeofdaybeuse = (g_RTC_Time.RTC_Hours * 60 + g_RTC_Time.RTC_Minutes);
-		OLED_DrawProgressBar(0, 44, 125, 2, timeofdaybeuse, 0, 24 * 60, 0, 1);
-		OLED_DrawProgressBar(125, 0, 2, 64, g_RTC_Time.RTC_Seconds, 0, 60, 0, 1); // ????
-		OLED_Refresh_Dirty();
-		delay_ms(150); // 
-
-		if ((key = KEY_Get()) != 0)
-		{
-			switch (key)
-			{
-
-			case KEY0_PRES:
-				TandH();
-				break;
-			case KEY1_PRES:
-			 vTaskSuspend( xHandle );
-			 vTaskSuspend( app_task1_handle );
-				BEEP_Buzz(0,1);
-				break;
-				case KEY2_PRES:
-				vTaskResume( xHandle );
-					vTaskResume( app_task1_handle );
-				break;
-			case KEY3_PRES:
-				printf("cd menu\r\n");
-				cho = menu(cho);
-				printf("out menu\r\n");
-				break;
-
-			default:
-				break;
-			}
-		}
-	}
+    }
+   
 }

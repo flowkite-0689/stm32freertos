@@ -64,7 +64,8 @@
     "typeinfo": "c",
     "stdio.h": "c",
     "delay.h": "c",
-    "inv_mpu_dmp_motion_driver.h": "c"
+    "inv_mpu_dmp_motion_driver.h": "c",
+    "queue.h": "c"
   },
   "cmake.sourceDirectory": "/mnt/d/codeStudy/c/stm32/study/demo/User/OLED/simulator"
 }
