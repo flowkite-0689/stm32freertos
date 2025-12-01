@@ -4,6 +4,7 @@
 #include "task.h"
 
 extern QueueHandle_t xDataQueue;
+extern QueueHandle_t xSendQueue;
 // 7）在USART接收中断服务函数实现数据接收和发送。
 void USART1_IRQHandler(void)
 {
@@ -66,46 +67,33 @@ void debug_init(void)
     USART_Cmd(USART1, ENABLE);
 }
 
-// 通过串口1，单片机发送字符串
+// 串口1发送字符串（通过队列）
 void Usart1_Send_Sring(char *string)
 {
-
     while (*string != '\0')
     {
-        USART_SendData(USART1, *string++); // 库函数
-        // 等待发送数据寄存器空
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-            ;
+        // 将字符放入发送队列
+        xQueueSend(xSendQueue, (uint8_t*)string++, portMAX_DELAY);
     }
-    // 等待发送完成
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
-        ;
+    // 注意：这里不再等待发送完成，因为由发送任务处理
+    // 如果需要确保所有数据都发送完成，可以添加一个特殊的同步标记
 }
 
-// 通过串口1，单片机发送字符串
+// 串口1发送字节数据（通过队列）
 void Usart1_send_bytes(uint8_t *buf, uint32_t len)
 {
     while (len--)
     {
-        USART_SendData(USART1, *buf++); // 库函数
-        // 等待发送数据寄存器空
-        while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-            ;
+        // 将字节放入发送队列
+        xQueueSend(xSendQueue, buf++, portMAX_DELAY);
     }
-    // 等待发送完成
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TC) == RESET)
-        ;
+    // 注意：这里不再等待发送完成，因为由发送任务处理
 }
 
 // 重定向c库函数printf到串口，重定向后可使用printf函数
 int fputc(int ch, FILE *f)
 {
-    /* 发送一个字节数据到串口 */
-    USART_SendData(USART1, (uint8_t)ch);
-
-    /* 等待发送完毕 */
-    while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-        ;
-
+    /* 将字符放入发送队列 */
+    xQueueSend(xSendQueue, (uint8_t*)&ch, portMAX_DELAY);
     return (ch);
 }

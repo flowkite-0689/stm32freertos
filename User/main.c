@@ -10,6 +10,7 @@
 #include "hooks.h"
 #include <string.h>
 QueueHandle_t xDataQueue;
+QueueHandle_t xSendQueue;
 static TaskHandle_t app_task_handle = NULL;
 static TaskHandle_t LED_handle = NULL;
 
@@ -21,7 +22,9 @@ static TimerHandle_t xTimers[2] = {0}; /* 定时器句柄 */
 
 void vTimerCallback(TimerHandle_t pxTimer); // 定时器回调函数
 static void data_task(void *pvParameters);
+static void send_task(void *pvParameters);
 TaskHandle_t Handle_data;
+TaskHandle_t Handle_send;
 
 int main(void)
 {
@@ -33,6 +36,7 @@ int main(void)
     LED_Set_All(1); // 全部熄灭
 
     xDataQueue = xQueueCreate(10, sizeof(uint8_t));
+    xSendQueue = xQueueCreate(20, sizeof(uint8_t));  // 创建发送队列
     printf("main:%p", xDataQueue);
     xTaskCreate(data_task,
                 "data_task",
@@ -40,6 +44,12 @@ int main(void)
                 (void *)&xDataQueue,
                 1,
                 &Handle_data);
+    xTaskCreate(send_task,
+                "send_task",
+                512,
+                (void *)&xSendQueue,
+                2,  // 优先级比接收任务稍高，确保及时发送
+                &Handle_send);
 
     //     /* 创建app_task任务 */
     //     xReturn = xTaskCreate((TaskFunction_t)app_task,          /* 任务入口函数 */
@@ -136,30 +146,29 @@ void vTimerCallback(TimerHandle_t pxTimer)
 static void data_task(void *pvParameters)
 {
     uint8_t buffer[50] = {0};
-   
+
     while (1)
     {
         uint8_t ch;
         uint8_t index = 0;
-        
+
         while (1)
         {
-             xQueueReceive(xDataQueue, &ch, portMAX_DELAY);
-            
-            printf("%c",ch);
-             if (index < sizeof(buffer) - 1)
-        {
-            buffer[index++] = ch;
-            buffer[index]='\0';
+            xQueueReceive(xDataQueue, &ch, portMAX_DELAY);
+
+            printf("%c", ch);
+            if (index < sizeof(buffer) - 1)
+            {
+                buffer[index++] = ch;
+                buffer[index] = '\0';//保证无论何时都是一个完整的字符串
+            }
+            if (ch == '\n')
+            {
+                break;
+            }
         }
-        if(ch=='\n')
-        {
-            break;
-        }
-        }
-        
-       
-         if (strstr((char *)buffer, "hello"))
+
+        if (strstr((char *)buffer, "hello"))
         {
             LED1 = !LED1;
         }
@@ -167,9 +176,25 @@ static void data_task(void *pvParameters)
         {
             LED2 = !LED2;
         }
-        //清空buffer
+        // 清空buffer
 
-
+        delay_ms(10);
     }
-   
+}
+
+static void send_task(void *pvParameters)
+{
+    uint8_t ch;
+    
+    while (1)
+    {
+        // 从发送队列中获取数据
+        if (xQueueReceive(xSendQueue, &ch, portMAX_DELAY) == pdPASS)
+        {
+            // 实际发送数据
+            USART_SendData(USART1, ch);
+            // 等待发送数据寄存器为空
+            while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+        }
+    }
 }
