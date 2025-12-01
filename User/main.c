@@ -21,10 +21,20 @@ static void LED_task(void *pvParameters);
 static TimerHandle_t xTimers[2] = {0}; /* 定时器句柄 */
 
 void vTimerCallback(TimerHandle_t pxTimer); // 定时器回调函数
+
+
+
+
+
+/*   === 收发uart的数据的任务===*/
 static void data_task(void *pvParameters);
 static void send_task(void *pvParameters);
 TaskHandle_t Handle_data;
 TaskHandle_t Handle_send;
+
+/*  ===*/
+
+
 
 int main(void)
 {
