@@ -9,6 +9,8 @@
 #include "timers.h"
 #include "hooks.h"
 #include <string.h>
+#include "oled_print.h"
+
 QueueHandle_t xDataQueue;
 QueueHandle_t xSendQueue;
 static TaskHandle_t app_task_handle = NULL;
@@ -44,6 +46,7 @@ int main(void)
     debug_init();
     LED_Init();
     LED_Set_All(1); // 全部熄灭
+    OLED_Init();
 
     xDataQueue = xQueueCreate(10, sizeof(uint8_t));
     xSendQueue = xQueueCreate(20, sizeof(uint8_t));  // 创建发送队列
@@ -61,18 +64,18 @@ int main(void)
                 2,  // 优先级比接收任务稍高，确保及时发送
                 &Handle_send);
 
-    //     /* 创建app_task任务 */
-    //     xReturn = xTaskCreate((TaskFunction_t)app_task,          /* 任务入口函数 */
-    //                           (const char *)"app_task",          /* 任务名字 */
-    //                           (uint16_t)512,                     /* 任务栈大小 */
-    //                           (void *)NULL,                      /* 任务入口函数参数 */
-    //                           (UBaseType_t)4,                    /* 任务的优先级 */
-    //                           (TaskHandle_t *)&app_task_handle); /* 任务控制块指针 */
-    // if (xReturn != pdPASS)
-    // {
-    //     printf("create app_task failed!\r\n");
-    //     return 0;
-    // }
+        /* 创建app_task任务 */
+        xReturn = xTaskCreate((TaskFunction_t)app_task,          /* 任务入口函数 */
+                              (const char *)"app_task",          /* 任务名字 */
+                              (uint16_t)512,                     /* 任务栈大小 */
+                              (void *)NULL,                      /* 任务入口函数参数 */
+                              (UBaseType_t)4,                    /* 任务的优先级 */
+                              (TaskHandle_t *)&app_task_handle); /* 任务控制块指针 */
+    if (xReturn != pdPASS)
+    {
+        printf("create app_task failed!\r\n");
+        return 0;
+    }
     /* 开启任务调度 */
     vTaskStartScheduler();
 }
@@ -181,12 +184,14 @@ static void data_task(void *pvParameters)
         if (strstr((char *)buffer, "hello"))
         {
             LED1 = !LED1;
+            OLED_Printf_Line(1," LED1 = %s;",LED1?"off":"on");
         }
         if (strstr((char *)buffer, "world"))
         {
             LED2 = !LED2;
+            OLED_Printf_Line(2," LED2 = %s",LED2?"off":"on");
         }
-        // 清空buffer
+        OLED_Refresh_Dirty();
 
         delay_ms(10);
     }
